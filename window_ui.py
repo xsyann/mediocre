@@ -4,22 +4,24 @@
 #
 # Author: Yann KOETH
 # Created: Sun Nov  9 15:07:41 2014 (+0100)
-# Last-Updated: Tue Nov 11 15:14:07 2014 (+0100)
+# Last-Updated: Tue Nov 11 21:36:18 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 160
+#     Update #: 392
 #
 
 from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget,
                              QWidget, QSplitter)
 
 from classes_tree_view import ClassesTreeView
+from paint_area import PaintArea
 
 class WindowUI(object):
 
     def widgetDataset(self):
         widget = QWidget()
-        return widget
+        return PaintArea(30, self)
 
     def widgetTraining(self):
         return QWidget()
