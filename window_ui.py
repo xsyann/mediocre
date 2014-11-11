@@ -4,33 +4,28 @@
 #
 # Author: Yann KOETH
 # Created: Sun Nov  9 15:07:41 2014 (+0100)
-# Last-Updated: Mon Nov 10 19:19:47 2014 (+0100)
+# Last-Updated: Tue Nov 11 15:14:07 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 102
+#     Update #: 160
 #
 
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget, QTreeView,
-                             QWidget, QGroupBox, QSplitter)
+from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget,
+                             QWidget, QSplitter)
+
+from classes_tree_view import ClassesTreeView
 
 class WindowUI(object):
 
     def widgetDataset(self):
-        return QWidget()
+        widget = QWidget()
+        return widget
 
     def widgetTraining(self):
         return QWidget()
 
     def widgetRecognition(self):
         return QWidget()
-
-    def widgetClassesTree(self):
-        self.classes_tree = QTreeView()
-        treeLayout = QHBoxLayout()
-        treeLayout.addWidget(self.classes_tree)
-        groupBox = QGroupBox(self.tr("Classes"))
-        groupBox.setLayout(treeLayout)
-        return groupBox
 
     def setupUI(self):
         """Create User Interface.
@@ -44,7 +39,8 @@ class WindowUI(object):
         tabs.addTab(self.widgetRecognition(), self.tr("Recognition"))
 
         self.hsplitter = QSplitter(QtCore.Qt.Horizontal)
-        self.hsplitter.addWidget(self.widgetClassesTree())
+        self.classes_tree_view = ClassesTreeView(self)
+        self.hsplitter.addWidget(self.classes_tree_view)
         self.hsplitter.addWidget(tabs)
 
         mainLayout.addWidget(self.hsplitter)

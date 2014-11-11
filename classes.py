@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Mon Nov 10 16:50:26 2014 (+0100)
-# Last-Updated: Mon Nov 10 19:18:33 2014 (+0100)
+# Last-Updated: Mon Nov 10 19:25:55 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 22
+#     Update #: 24
 #
 
 import os
@@ -20,9 +20,9 @@ class TreeItem(QStandardItem):
     pass
 
 class Class:
-    def __init__(self, value, str, folder):
+    def __init__(self, value, repr, folder):
         self.value = value
-        self.str = str
+        self.repr = repr
         self.folder = folder
 
 class Classes:
@@ -42,9 +42,9 @@ class Classes:
     classes = None
 
     @staticmethod
-    def _addClass(parent, value, str, name):
-        item = TreeItem(str)
-        item.setData(Class(value, str, name))
+    def _addClass(parent, value, repr, name):
+        item = TreeItem(repr)
+        item.setData(Class(value, repr, name))
         parent.appendRow(item)
 
     @staticmethod
@@ -107,10 +107,10 @@ class Classes:
         for sym in list(string.punctuation + ' '):
             is_sym, is_punc = sym in symbols, sym in punctuation
             if is_sym or is_punc:
-                str_repr, name = symbols[sym] if is_sym  else punctuation[sym]
+                repr, name = symbols[sym] if is_sym  else punctuation[sym]
                 parent = commonGroup if is_punc else symbolGroup
-                str_repr = "{0} ({1})".format(sym, str_repr.capitalize())
-                Classes._addClass(parent, sym, str_repr,
+                repr = "{0} ({1})".format(sym, repr.capitalize())
+                Classes._addClass(parent, sym, repr,
                                   Classes.SYMBOLS_PREFIX + name)
 
     @staticmethod
