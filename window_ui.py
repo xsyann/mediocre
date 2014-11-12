@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Sun Nov  9 15:07:41 2014 (+0100)
-# Last-Updated: Tue Nov 11 21:36:18 2014 (+0100)
+# Last-Updated: Wed Nov 12 16:38:35 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 392
+#     Update #: 408
 #
 
 from PyQt5 import QtCore
@@ -15,13 +15,9 @@ from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget,
                              QWidget, QSplitter)
 
 from classes_tree_view import ClassesTreeView
-from paint_area import PaintArea
+from dataset_widget import DatasetWidget
 
 class WindowUI(object):
-
-    def widgetDataset(self):
-        widget = QWidget()
-        return PaintArea(30, self)
 
     def widgetTraining(self):
         return QWidget()
@@ -36,7 +32,7 @@ class WindowUI(object):
         mainLayout = QHBoxLayout()
 
         tabs = QTabWidget()
-        tabs.addTab(self.widgetDataset(), self.tr("Dataset"))
+        tabs.addTab(DatasetWidget(), self.tr("Dataset"))
         tabs.addTab(self.widgetTraining(), self.tr("Training"))
         tabs.addTab(self.widgetRecognition(), self.tr("Recognition"))
 
