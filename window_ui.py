@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Sun Nov  9 15:07:41 2014 (+0100)
-# Last-Updated: Wed Nov 12 16:38:35 2014 (+0100)
+# Last-Updated: Thu Nov 13 19:01:32 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 408
+#     Update #: 430
 #
 
 from PyQt5 import QtCore
@@ -32,14 +32,21 @@ class WindowUI(object):
         mainLayout = QHBoxLayout()
 
         tabs = QTabWidget()
-        tabs.addTab(DatasetWidget(), self.tr("Dataset"))
+        self.classes_tree_view = ClassesTreeView(self)
+        tabs.addTab(DatasetWidget(self.classes_tree_view), self.tr("Dataset"))
         tabs.addTab(self.widgetTraining(), self.tr("Training"))
         tabs.addTab(self.widgetRecognition(), self.tr("Recognition"))
 
+        leftLayout, rightLayout = QHBoxLayout(), QHBoxLayout()
+        leftLayout.addWidget(self.classes_tree_view)
+        rightLayout.addWidget(tabs)
+        left, right = QWidget(), QWidget()
+        left.setLayout(leftLayout)
+        right.setLayout(rightLayout)
         self.hsplitter = QSplitter(QtCore.Qt.Horizontal)
-        self.classes_tree_view = ClassesTreeView(self)
-        self.hsplitter.addWidget(self.classes_tree_view)
-        self.hsplitter.addWidget(tabs)
+        self.hsplitter.addWidget(left)
+        self.hsplitter.addWidget(right)
+        self.hsplitter.setStretchFactor(1, 3)
 
         mainLayout.addWidget(self.hsplitter)
         mainWidget.setLayout(mainLayout)

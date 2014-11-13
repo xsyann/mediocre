@@ -2,9 +2,9 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:51:54 2014 (+0100)
-# Last-Updated: Wed Nov 12 16:51:10 2014 (+0100)
+# Last-Updated: Thu Nov 13 19:04:10 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 394
+#     Update #: 408
 #
 
 from PyQt5.QtCore import Qt, QSize, QRectF, QEvent, QRect, QPointF, pyqtSignal
@@ -19,7 +19,7 @@ class BrushSizeWidget(QWidget):
     ICON_SIZE = (12, 12)
     BUTTON_SIZE = (40, 30)
     ITEM_SIZE = (100, 20)
-    MARGIN = 5
+    MARGIN = 7
 
     brushSizeChanged = pyqtSignal(int)
 
@@ -66,7 +66,8 @@ class BrushSizeWidget(QWidget):
     def createListWidget(self):
         listWidget = QListWidget()
         w, h = self.ITEM_SIZE
-        listWidget.setFixedWidth(w + self.MARGIN)
+        scroll_size = 16
+        listWidget.setFixedWidth(w + scroll_size)
         listWidget.setAttribute(Qt.WA_MacShowFocusRect, False);
         for x in xrange(self._min_size, self._max_size):
             h = max(x + self.MARGIN * 2.0, h)

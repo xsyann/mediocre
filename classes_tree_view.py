@@ -4,24 +4,50 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 15:10:03 2014 (+0100)
-# Last-Updated: Tue Nov 11 15:13:27 2014 (+0100)
+# Last-Updated: Thu Nov 13 18:55:20 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 12
+#     Update #: 80
 #
 
-from PyQt5 import QtCore
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QTreeView, QHBoxLayout, QGroupBox
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 
-from classes import Classes
+from classes import Classes, Class
+
+class TreeItem(QStandardItem):
+
+    def setData(self, value, role=Qt.UserRole + 1):
+        state = self.checkState()
+        super(TreeItem, self).setData(value, role)
+        if (role == Qt.CheckStateRole and
+            state != self.checkState()):
+            model = self.model()
+            if model is not None:
+                model.itemChecked.emit(self)
+
+    def isActivated(self):
+        return self.checkState() == Qt.Checked and self.isEnabled()
+
+    def setCheckState(self, state):
+        enable = (state == Qt.Checked)
+        parent = self.parent()
+        while parent:
+            enable &= (parent.checkState() == Qt.Checked)
+            parent = parent.parent()
+        method = lambda child: child.setEnabled(enable)
+        self.model().mapChildren(self, method)
+        return super(TreeItem, self).setCheckState(state)
 
 class TreeModel(QStandardItemModel):
 
+    itemChecked = pyqtSignal(TreeItem)
+
     def __init__(self, parent=None):
         super(TreeModel, self).__init__(parent)
-        self.itemChanged.connect(self.__itemChanged)
+        self.itemChecked.connect(self.__itemChecked)
 
-    def __itemChanged(self, item):
+    def __itemChecked(self, item):
         item.setCheckState(item.checkState())
 
     def mapChildren(self, parent, method):
@@ -30,48 +56,31 @@ class TreeModel(QStandardItemModel):
             method(item)
             self.mapChildren(item, method)
 
-class TreeItem(QStandardItem):
-
-    def setCheckState(self, state):
-        enable = (state == QtCore.Qt.Checked)
-        parent = self.parent()
-        while parent:
-            enable &= (parent.checkState() == QtCore.Qt.Checked)
-            parent = parent.parent()
-        method = lambda child: child.setEnabled(enable)
-        self.model().mapChildren(self, method)
-        return super(TreeItem, self).setCheckState(state)
-
-
-class ClassesTreeView(QWidget):
+class ClassesTreeView(QTreeView):
 
     def __init__(self, parent=None):
         super(ClassesTreeView, self).__init__(parent)
         self.parent = parent
-        self.setupUI()
         self.populateUI()
         self.initUI()
 
-    def setupUI(self):
-        self.tree = QTreeView()
-        treeLayout = QHBoxLayout()
-        treeLayout.addWidget(self.tree)
-        groupBox = QGroupBox(self.tr("Classes"))
-        groupBox.setLayout(treeLayout)
-        mainLayout = QHBoxLayout()
-        mainLayout.addWidget(groupBox)
-        self.setLayout(mainLayout)
-
     def populateUI(self):
         self.model = self.convertTree(Classes.getClasses())
-        self.tree.setModel(self.model)
+        self.model.setHorizontalHeaderLabels(["Classes"])
+        self.setModel(self.model)
 
     def initUI(self):
-        self.tree.header().close()
         unchecked = [Classes.ENGLISH_ALPHABET, Classes.PUNCTUATION]
-        method = lambda child: child.setCheckState(QtCore.Qt.Checked \
-            if not child.data() in unchecked else QtCore.Qt.Unchecked)
+        method = (lambda c: c.setCheckState(Qt.Checked if not c.data() in \
+                                                unchecked else Qt.Unchecked))
         self.model.mapChildren(self.model.invisibleRootItem(), method)
+
+    def getClasses(self):
+       classes = []
+       method = lambda child: classes.append(child.data()) \
+           if isinstance(child.data(), Class) and child.isActivated() else False
+       self.model.mapChildren(self.model.invisibleRootItem(), method)
+       return classes
 
     def convertTree(self, tree):
         def cloneChildren(source, parent):

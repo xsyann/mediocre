@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:35:40 2014 (+0100)
-# Last-Updated: Wed Nov 12 17:10:55 2014 (+0100)
+# Last-Updated: Thu Nov 13 16:00:28 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 32
+#     Update #: 92
 #
 
 from PyQt5.QtCore import Qt
@@ -23,23 +23,31 @@ class PaintArea(QGraphicsView):
         self.pen = QPen(Qt.black, width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         self.painting = False
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.viewport().setCursor(QCursor(Qt.BlankCursor))
-        self._cursor = self.scene().addEllipse(0, 0, 0, 0)
+        self.viewport().setCursor(self.getCursor())
 
     def setBrushSize(self, size):
         self.pen.setWidth(size)
+        self.viewport().setCursor(self.getCursor())
 
-    def updateCursor(self, pos):
-        w = self.pen.width()
-        self._cursor.setRect(pos.x() - w / 2.0, pos.y() - w / 2.0, w, w)
+    def clear(self):
+        self.scene().clear()
+
+    def getCursor(self):
+        antialiasing_margin = 1
+        size = self.pen.width()
+        pixmap = QPixmap(size + antialiasing_margin * 2,
+                         size + antialiasing_margin * 2)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
+        painter.drawEllipse(QRectF(QPointF(antialiasing_margin, antialiasing_margin),
+                                   QSizeF(size, size)))
+        painter.end()
+        return QCursor(pixmap)
 
     def drawPoint(self, pos):
-        delta = QPointF(.001, 0)
+        delta = QPointF(.0001, 0)
         self.scene().addLine(QLineF(pos, pos - delta), self.pen)
-
-    def leaveEvent(self, event):
-        self._cursor.setRect(0, 0, 0, 0)
-        return super(PaintArea, self).leaveEvent(event)
 
     def mousePressEvent(self, event):
         self.start = QPointF(self.mapToScene(event.pos()))
@@ -52,7 +60,6 @@ class PaintArea(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         pos = QPointF(self.mapToScene(event.pos()))
-        self.updateCursor(pos)
         if self.painting:
             brush = QBrush(Qt.SolidPattern)
             self.scene().addLine(QLineF(self.start, pos), self.pen)
