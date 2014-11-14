@@ -4,31 +4,33 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 12 16:35:10 2014 (+0100)
-# Last-Updated: Fri Nov 14 21:00:33 2014 (+0100)
+# Last-Updated: Fri Nov 14 21:54:31 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 456
+#     Update #: 478
 #
 
 import os
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QLabel, QToolBar, QSizePolicy, QAction, QLineEdit,
-                             QScrollArea, QGroupBox, QSpinBox)
+                             QScrollArea, QGroupBox, QSpinBox, QFileDialog)
 from PyQt5.QtCore import QRectF, QEvent, Qt, QSize
 from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
 
 from paint_area import PaintArea
 from brush_size_widget import BrushSizeWidget
+from dataset import Dataset
 
 class DatasetWidget(QWidget):
 
     FORMAT = "bmp"
-    SIZE = 50, 50
+    SAVE_SIZE = 50, 50
     PAINT_SIZE = 300, 300
 
     def __init__(self, classes_tree, parent=None):
         super(DatasetWidget, self).__init__(parent)
         self._classes_tree = classes_tree
+        self._dataset = None
         self.brush_size = 13
         self.setupUI()
         self.connectUI()
@@ -58,6 +60,7 @@ class DatasetWidget(QWidget):
         self.clearAction.triggered.connect(self.clear)
         self.saveAction.triggered.connect(self.save)
         self._classes_tree.model.itemChecked.connect(self.reloadClasses)
+        self.selectFolderButton.clicked.connect(self.selectFolder)
 
     def eventFilter(self, watched, event):
         if event.type() == QEvent.KeyPress and \
@@ -149,6 +152,11 @@ class DatasetWidget(QWidget):
         self.displayInstructions()
         self.setEnabled(len(self._classes) > 0)
 
+    def selectFolder(self):
+        file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        if file:
+            self.datasetFolder.setText(file)
+
     def displayInstructions(self):
         if not self._classes:
             self.instructionLabel.setText("")
@@ -160,19 +168,18 @@ class DatasetWidget(QWidget):
         self.paintArea.clear()
 
     def saveImage(self):
-        folder = self._classes[self._index].folder
-        filename =  self.prefixLine.text() + folder
-        dirs = os.path.join(self.datasetFolder.text(), folder)
-        if not os.path.exists(dirs):
-            os.makedirs(dirs)
-        path = os.path.join(dirs, filename + "." + self.FORMAT)
-        pixmap = QPixmap(*self.SIZE)
+        cl = self._classes[self._index]
+        pixmap = QPixmap(*self.SAVE_SIZE)
         pixmap.fill(Qt.white)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
         self.paintArea.render(painter)
         painter.end()
-        print pixmap.save(path, self.FORMAT)
+        if not self._dataset:
+            self._dataset = Dataset(self.datasetFolder.text())
+        else:
+            self._dataset.setFolder(self.datasetFolder.text())
+        self._dataset.addDatum(self.prefixLine.text(), cl, pixmap, self.FORMAT)
 
     def save(self):
         if self._classes:
