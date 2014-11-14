@@ -4,37 +4,60 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 12 16:35:10 2014 (+0100)
-# Last-Updated: Thu Nov 13 18:15:03 2014 (+0100)
+# Last-Updated: Fri Nov 14 21:00:33 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 158
+#     Update #: 456
 #
 
+import os
+
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-                             QLabel)
-from PyQt5.QtCore import QRectF, QEvent, Qt
-from PyQt5.QtGui import QFont, QKeySequence
+                             QLabel, QToolBar, QSizePolicy, QAction, QLineEdit,
+                             QScrollArea, QGroupBox, QSpinBox)
+from PyQt5.QtCore import QRectF, QEvent, Qt, QSize
+from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
 
 from paint_area import PaintArea
 from brush_size_widget import BrushSizeWidget
 
 class DatasetWidget(QWidget):
 
+    FORMAT = "bmp"
+    SIZE = 50, 50
+    PAINT_SIZE = 300, 300
+
     def __init__(self, classes_tree, parent=None):
         super(DatasetWidget, self).__init__(parent)
         self._classes_tree = classes_tree
-        self.brush_size = 10
+        self.brush_size = 13
         self.setupUI()
         self.connectUI()
+        self.initUI()
         self.reloadClasses()
 
     def setupUI(self):
         layout = QVBoxLayout()
         self.paintArea = PaintArea(self.brush_size)
+        self.paintArea.setFixedSize(*self.PAINT_SIZE)
         self.paintArea.installEventFilter(self)
-        self.paintArea.setSceneRect(QRectF(0, 0, 320, 240))
+        self.previewLabel = QLabel(self.tr("Preview"))
         layout.addWidget(self.toolbarWidget())
-        layout.addWidget(self.paintArea)
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.randomWidget())
+        hbox.addWidget(self.paintArea)
+        layout.addLayout(hbox)
+        layout.addWidget(self.folderWidget())
         self.setLayout(layout)
+
+    def initUI(self):
+        folder = os.path.join(os.path.dirname(__file__), "dataset")
+        self.datasetFolder.setText(folder)
+
+    def connectUI(self):
+        self.brushSizeWidget.brushSizeChanged.connect(self.setBrushSize)
+        self.clearAction.triggered.connect(self.clear)
+        self.saveAction.triggered.connect(self.save)
+        self._classes_tree.model.itemChecked.connect(self.reloadClasses)
 
     def eventFilter(self, watched, event):
         if event.type() == QEvent.KeyPress and \
@@ -43,28 +66,81 @@ class DatasetWidget(QWidget):
             self.save()
         return super(DatasetWidget, self).eventFilter(watched, event)
 
-    def toolbarWidget(self):
-        toolbar = QWidget()
+    def folderWidget(self):
+        widget = QWidget()
         layout = QHBoxLayout()
+        label = QLabel(self.tr("Folder"))
+        self.datasetFolder = QLineEdit()
+        self.selectFolderButton = QPushButton(self.tr("..."))
+        self.selectFolderButton.setMaximumWidth(40)
+        layout.addWidget(label)
+        layout.addWidget(self.datasetFolder)
+        layout.addWidget(self.selectFolderButton)
+        widget.setLayout(layout)
+        return widget
+
+    def prefixWidget(self):
+        widget = QWidget()
+        layout = QHBoxLayout()
+        prefixLabel = QLabel(self.tr("Prefix:"))
+        self.prefixLine = QLineEdit()
+        self.prefixLine.setPlaceholderText(self.tr("login_x-"))
+        self.prefixLine.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
+        layout.addWidget(prefixLabel)
+        layout.addWidget(self.prefixLine)
+        widget.setLayout(layout)
+        return widget
+
+    def randomWidget(self):
+        group = QGroupBox("Randomize")
+        countLayout = QHBoxLayout()
+        self.randomCount = QSpinBox()
+        countLayout.addWidget(QLabel(self.tr("Count")))
+        countLayout.addWidget(self.randomCount)
+        countLayout.addStretch(1)
+        layout = QVBoxLayout()
+        self.minBrushSize = BrushSizeWidget(3)
+        self.maxBrushSize = BrushSizeWidget(20)
+        brushSizeRange = QHBoxLayout()
+        brushSizeRange.addWidget(QLabel(self.tr("Min")))
+        brushSizeRange.addWidget(self.minBrushSize)
+        brushSizeRange.addStretch(1)
+        brushSizeRange.addWidget(QLabel(self.tr("Max")))
+        brushSizeRange.addWidget(self.maxBrushSize)
+        layout.addLayout(countLayout)
+        layout.addLayout(brushSizeRange)
+        layout.addStretch(1)
+        group.setLayout(layout)
+        group.setFixedWidth(200)
+        return group
+
+    def toolbarSpacer(self):
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        return spacer
+
+    def toolbarWidget(self):
         self.brushSizeWidget = BrushSizeWidget(self.brush_size)
-        self.clearButton = QPushButton(self.tr("Clear"))
-        self.saveButton = QPushButton(self.tr("Save"))
         self.instructionLabel = QLabel()
         f = QFont('Arial', 20, QFont.Bold)
         self.instructionLabel.setFont(f)
-        layout.addWidget(self.brushSizeWidget)
-        layout.addWidget(self.clearButton)
-        layout.addWidget(self.saveButton)
-        layout.addStretch(1)
-        layout.addWidget(self.instructionLabel)
-        toolbar.setLayout(layout)
-        return toolbar
+        self.clearAction = QAction(QIcon('assets/clear.png'), 'Clear', self)
+        self.saveAction = QAction(QIcon('assets/save.png'), 'Save', self)
+        self.removeAction = QAction(QIcon('assets/remove.png'), 'Remove', self)
 
-    def connectUI(self):
-        self.brushSizeWidget.brushSizeChanged.connect(self.setBrushSize)
-        self.clearButton.clicked.connect(self.clear)
-        self.saveButton.clicked.connect(self.save)
-        self._classes_tree.model.itemChecked.connect(self.reloadClasses)
+        toolbar = QToolBar()
+
+        toolbar.setIconSize(QSize(30, 30))
+        toolbar.addWidget(self.brushSizeWidget)
+        toolbar.addSeparator()
+        toolbar.addAction(self.clearAction)
+        toolbar.addAction(self.saveAction)
+        toolbar.addAction(self.removeAction)
+        toolbar.addSeparator()
+        toolbar.addWidget(self.prefixWidget())
+        toolbar.addWidget(self.toolbarSpacer())
+        toolbar.addWidget(self.instructionLabel)
+        return toolbar
 
     def reloadClasses(self):
         self.clear()
@@ -83,13 +159,38 @@ class DatasetWidget(QWidget):
     def clear(self):
         self.paintArea.clear()
 
+    def saveImage(self):
+        folder = self._classes[self._index].folder
+        filename =  self.prefixLine.text() + folder
+        dirs = os.path.join(self.datasetFolder.text(), folder)
+        if not os.path.exists(dirs):
+            os.makedirs(dirs)
+        path = os.path.join(dirs, filename + "." + self.FORMAT)
+        pixmap = QPixmap(*self.SIZE)
+        pixmap.fill(Qt.white)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        self.paintArea.render(painter)
+        painter.end()
+        print pixmap.save(path, self.FORMAT)
+
     def save(self):
         if self._classes:
-            print "save", self._classes[self._index].folder
-        if self._classes:
+            self.saveImage()
             self._index = (self._index + 1) % len(self._classes)
-        self.displayInstructions()
-        self.clear()
+            self.displayInstructions()
+            self.clear()
+#        pixmap = QPixmap(300, 600)
+#        pixmap.fill(Qt.white)
+#        painter = QPainter(pixmap)
+#        painter.setRenderHint(QPainter.Antialiasing)
+#        self.paintArea.render(painter)
+#        painter.end()
+#        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+#        print self.scrollArea.size()
+#        self.previewLabel.resize(self.scrollArea.size())
+#        self.previewLabel.setPixmap(pixmap)
+#        print self.previewLabel.size()
 
     def setBrushSize(self, size):
         self.paintArea.setBrushSize(size)

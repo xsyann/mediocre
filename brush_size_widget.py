@@ -2,19 +2,19 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:51:54 2014 (+0100)
-# Last-Updated: Thu Nov 13 19:04:10 2014 (+0100)
+# Last-Updated: Fri Nov 14 20:37:24 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 408
+#     Update #: 426
 #
 
 from PyQt5.QtCore import Qt, QSize, QRectF, QEvent, QRect, QPointF, pyqtSignal
 from PyQt5.QtGui import (QPixmap, QIcon, QPainter, QPen, QBrush, QKeySequence,
                          QPainterPath)
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QToolButton, QMenu,
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QToolButton, QMenu,
                              QWidgetAction, QListWidget, QListWidgetItem,
                              QLabel)
 
-class BrushSizeWidget(QWidget):
+class BrushSizeWidget(QToolButton):
 
     ICON_SIZE = (12, 12)
     BUTTON_SIZE = (40, 30)
@@ -32,20 +32,17 @@ class BrushSizeWidget(QWidget):
         self.connectUI()
 
     def initUI(self):
-        layout = QHBoxLayout(self)
-        self.button = QToolButton(self)
-        self.button.setPopupMode(QToolButton.MenuButtonPopup)
-        self.menu = QMenu(self.button)
-        self.button.setMenu(self.menu)
-        self.button.setFixedSize(*self.BUTTON_SIZE)
-        self.button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        layout = QVBoxLayout(self)
+        self.setPopupMode(QToolButton.MenuButtonPopup)
+        self.menu = QMenu(self)
+        self.setMenu(self.menu)
+        self.setFixedSize(*self.BUTTON_SIZE)
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.listWidget = self.createListWidget()
         self.listWidget.installEventFilter(self)
-        action = QWidgetAction(self.button)
+        action = QWidgetAction(self)
         action.setDefaultWidget(self.listWidget)
-        self.button.menu().addAction(action)
-        layout.addWidget(self.button)
-        self.setLayout(layout)
+        self.menu.addAction(action)
         self.updateIcon()
 
     def connectUI(self):
@@ -90,7 +87,7 @@ class BrushSizeWidget(QWidget):
         return listWidget
 
     def updateIcon(self):
-        self.button.setText(str(self._size))
+        self.setText(str(self._size))
         w, h = self.ICON_SIZE
         pixmap = QPixmap(w, h)
         pixmap.fill(Qt.transparent)
@@ -101,7 +98,7 @@ class BrushSizeWidget(QWidget):
         center = (w - preview_size) / 2.0
         painter.drawEllipse(QRect(center, center, preview_size, preview_size))
         painter.end()
-        self.button.setIcon(QIcon(pixmap))
-        self.button.setIconSize(QSize(w, h))
+        self.setIcon(QIcon(pixmap))
+        self.setIconSize(QSize(w, h))
 
 

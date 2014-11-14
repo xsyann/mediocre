@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:35:40 2014 (+0100)
-# Last-Updated: Thu Nov 13 16:00:28 2014 (+0100)
+# Last-Updated: Fri Nov 14 18:32:27 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 92
+#     Update #: 110
 #
 
 from PyQt5.QtCore import Qt
@@ -25,9 +25,16 @@ class PaintArea(QGraphicsView):
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
         self.viewport().setCursor(self.getCursor())
 
+    def setFixedSize(self, w, h):
+        self.setSceneRect(QRectF(0, 0, 1, 1))
+        super(PaintArea, self).setFixedSize(w, h)
+
     def setBrushSize(self, size):
         self.pen.setWidth(size)
         self.viewport().setCursor(self.getCursor())
+
+    def render(self, painter):
+        self.scene().render(painter)
 
     def clear(self):
         self.scene().clear()
