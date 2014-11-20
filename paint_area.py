@@ -4,21 +4,23 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:35:40 2014 (+0100)
-# Last-Updated: Thu Nov 20 20:27:43 2014 (+0100)
+# Last-Updated: Thu Nov 20 21:53:25 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 392
+#     Update #: 520
 #
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsLineItem,
                              QGraphicsRectItem)
 from PyQt5.QtCore import QLineF, QPointF, QRectF, QSizeF
-from PyQt5.QtGui import QPen, QBrush, QCursor, QPainter, QPixmap
+from PyQt5.QtGui import QPen, QBrush, QCursor, QPainter, QPixmap, QFont, QColor
 
 class PaintArea(QGraphicsView):
     def __init__(self, width=10, parent=None):
         QGraphicsView.__init__(self, parent)
         self._frame = None
+        self._instructions = None
+        self._text = ""
         self.setScene(QGraphicsScene(self))
         self.setMouseTracking(True)
         self.pen = QPen(Qt.black, width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
@@ -31,20 +33,41 @@ class PaintArea(QGraphicsView):
         self.scene().setBackgroundBrush(Qt.gray)
         self.setSceneRect(QRectF(self.contentsRect()))
         self.centerFrame()
+        self.centerInstructions()
+
+    def centerInstructions(self):
+        if self._instructions:
+            textSize = self._instructions.document().size()
+            factor = min(self._frame.boundingRect().size().width() / textSize.width(),
+                         self._frame.boundingRect().size().height() / textSize.height())
+            size = self.size()
+            f = self._instructions.font()
+            f.setPointSizeF(f.pointSizeF() * factor)
+            self._instructions.setFont(f)
+            textSize = self._instructions.document().size()
+            self._instructions.setPos((size.width() - textSize.width()) / 2.0,
+                                      (size.height() - textSize.height()) / 2.0)
+
+    def setInstructions(self, text):
+        if self._instructions:
+            self.scene().removeItem(self._instructions)
+        self._instructions = self.scene().addText(text, QFont('Arial', 50, QFont.Bold))
+        self._instructions.setDefaultTextColor(QColor(220, 220, 220))
+        self._text = text
+        self.centerInstructions()
 
     def setFrame(self, width, height):
         if self._frame:
             self._frame.setRect(0, 0, width, height)
         else:
             self.addFrame(QRectF(0, 0, width, height))
+        self.updateScene()
 
     def addFrame(self, rect):
         self._frame = QGraphicsRectItem(rect)
         self._frame.setPen(QPen(Qt.NoPen))
         self._frame.setBrush(Qt.white)
         self.scene().addItem(self._frame)
-        self.centerFrame()
-        self.updateScene()
 
     def centerFrame(self):
         if self._frame:
@@ -65,6 +88,9 @@ class PaintArea(QGraphicsView):
         self.viewport().setCursor(self.getCursor())
 
     def render(self, painter):
+        if self._instructions:
+            self.scene().removeItem(self._instructions)
+            self._instructions = None
         self.scene().render(painter,
                             source=self._frame.rect())
 
@@ -73,9 +99,13 @@ class PaintArea(QGraphicsView):
         if self._frame:
             rect = self._frame.rect()
         self.scene().clear()
+        self._instructions = None
         self.setScene(QGraphicsScene())
         if rect:
             self.addFrame(rect)
+        if self._text:
+            self.setInstructions(self._text)
+        self.updateScene()
 
     def getCursor(self):
         antialiasing_margin = 1
