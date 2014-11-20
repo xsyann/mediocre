@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 15:10:03 2014 (+0100)
-# Last-Updated: Thu Nov 13 18:55:20 2014 (+0100)
+# Last-Updated: Thu Nov 20 20:27:44 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 80
+#     Update #: 82
 #
 
 from PyQt5.QtCore import Qt, pyqtSignal

@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Mon Nov 10 14:30:25 2014 (+0100)
-# Last-Updated: Fri Nov 14 21:50:07 2014 (+0100)
+# Last-Updated: Thu Nov 20 20:38:57 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 92
+#     Update #: 104
 #
 
 import os
@@ -18,6 +18,7 @@ class Dataset(object):
 
     def __init__(self, folder):
         self._folder = folder
+        self._last = []
 
     def addDatum(self, prefix, cl, pixmap, format):
         folder = cl.folder
@@ -26,7 +27,18 @@ class Dataset(object):
             os.makedirs(dirs)
         filename =  prefix + folder
         path = self.generateFilename(dirs, prefix, format)
-        print pixmap.save(path, format)
+        if pixmap.save(path, format):
+            self._last.append(path)
+            print "Write", path
+
+    def removeLast(self):
+        if self._last:
+            path = self._last[-1]
+            os.remove(path)
+            print "Remove", path
+            self._last.pop(-1)
+            return True
+        return False
 
     def generateFilename(self, folder, prefix, ext):
         """Generate a filename in folder.

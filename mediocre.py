@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Sun Nov  9 14:56:03 2014 (+0100)
-# Last-Updated: Thu Nov 13 19:04:43 2014 (+0100)
+# Last-Updated: Thu Nov 20 20:27:38 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 72
+#     Update #: 76
 #
 
 import sys
@@ -22,7 +22,7 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
     main = Window()
-    main.resize(800, 400)
+    main.resize(900, 600)
     main.setWindowTitle(APP_NAME)
     main.show()
     try:

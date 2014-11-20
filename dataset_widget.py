@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 12 16:35:10 2014 (+0100)
-# Last-Updated: Fri Nov 14 21:54:31 2014 (+0100)
+# Last-Updated: Thu Nov 20 20:47:34 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 478
+#     Update #: 1306
 #
 
 import os
@@ -14,24 +14,64 @@ import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QLabel, QToolBar, QSizePolicy, QAction, QLineEdit,
                              QScrollArea, QGroupBox, QSpinBox, QFileDialog)
-from PyQt5.QtCore import QRectF, QEvent, Qt, QSize
+from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal
 from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
 
 from paint_area import PaintArea
 from brush_size_widget import BrushSizeWidget
 from dataset import Dataset
 
+class ImageLabel(QLabel):
+
+    def __init__(self, pixmap, parent=None):
+        super(ImageLabel, self).__init__(parent)
+        self.parent = parent
+        self.pixmap = pixmap
+        self.setPixmap(self.pixmap)
+        self._resize = True
+
+    def resizeEvent(self, event):
+        self.scaled = self.pixmap.scaledToHeight(self.parent.widget.size().height(),
+                                                 Qt.SmoothTransformation)
+        self.setPixmap(self.scaled)
+        super(ImageLabel, self).resizeEvent(event)
+
+class PreviewWidget(QScrollArea):
+
+    def __init__(self, parent=None):
+        super(PreviewWidget, self).__init__(parent)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.widget = QWidget()
+        self.layout = QHBoxLayout()
+        self.layout.addStretch(1)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.widget.setLayout(self.layout)
+        self.setWidget(self.widget)
+
+    def removeLast(self):
+        item = self.layout.takeAt(0)
+        if item:
+            item.widget().deleteLater()
+
+    def resizeEvent(self, event):
+        self.widget.setFixedHeight(self.viewport().height())
+        super(PreviewWidget, self).resizeEvent(event)
+
+    def addPixmap(self, pixmap):
+        label = ImageLabel(pixmap, self)
+        self.layout.insertWidget(0, label)
+
 class DatasetWidget(QWidget):
 
     FORMAT = "bmp"
-    SAVE_SIZE = 50, 50
-    PAINT_SIZE = 300, 300
+    SAVE_SIZE = 150, 150
 
     def __init__(self, classes_tree, parent=None):
         super(DatasetWidget, self).__init__(parent)
         self._classes_tree = classes_tree
         self._dataset = None
-        self.brush_size = 13
+        self.brush_size = 20
         self.setupUI()
         self.connectUI()
         self.initUI()
@@ -40,14 +80,15 @@ class DatasetWidget(QWidget):
     def setupUI(self):
         layout = QVBoxLayout()
         self.paintArea = PaintArea(self.brush_size)
-        self.paintArea.setFixedSize(*self.PAINT_SIZE)
         self.paintArea.installEventFilter(self)
-        self.previewLabel = QLabel(self.tr("Preview"))
+        self.paintArea.setFrame(*self.SAVE_SIZE)
+        self.previewWidget = PreviewWidget()
         layout.addWidget(self.toolbarWidget())
         hbox = QHBoxLayout()
         hbox.addWidget(self.randomWidget())
         hbox.addWidget(self.paintArea)
         layout.addLayout(hbox)
+        layout.addWidget(self.previewWidget)
         layout.addWidget(self.folderWidget())
         self.setLayout(layout)
 
@@ -59,6 +100,7 @@ class DatasetWidget(QWidget):
         self.brushSizeWidget.brushSizeChanged.connect(self.setBrushSize)
         self.clearAction.triggered.connect(self.clear)
         self.saveAction.triggered.connect(self.save)
+        self.removeAction.triggered.connect(self.removeLast)
         self._classes_tree.model.itemChecked.connect(self.reloadClasses)
         self.selectFolderButton.clicked.connect(self.selectFolder)
 
@@ -164,6 +206,13 @@ class DatasetWidget(QWidget):
             class_name = self._classes[self._index].repr
             self.instructionLabel.setText(self.tr("Draw: ") + class_name)
 
+    def removeLast(self):
+       if self._dataset:
+           if self._dataset.removeLast():
+               self._index = (self._index - 1) % len(self._classes)
+               self.previewWidget.removeLast()
+               self.displayInstructions()
+
     def clear(self):
         self.paintArea.clear()
 
@@ -180,24 +229,15 @@ class DatasetWidget(QWidget):
         else:
             self._dataset.setFolder(self.datasetFolder.text())
         self._dataset.addDatum(self.prefixLine.text(), cl, pixmap, self.FORMAT)
+        return pixmap
 
     def save(self):
         if self._classes:
-            self.saveImage()
+            pixmap = self.saveImage()
             self._index = (self._index + 1) % len(self._classes)
             self.displayInstructions()
+            self.previewWidget.addPixmap(pixmap)
             self.clear()
-#        pixmap = QPixmap(300, 600)
-#        pixmap.fill(Qt.white)
-#        painter = QPainter(pixmap)
-#        painter.setRenderHint(QPainter.Antialiasing)
-#        self.paintArea.render(painter)
-#        painter.end()
-#        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-#        print self.scrollArea.size()
-#        self.previewLabel.resize(self.scrollArea.size())
-#        self.previewLabel.setPixmap(pixmap)
-#        print self.previewLabel.size()
 
     def setBrushSize(self, size):
         self.paintArea.setBrushSize(size)
