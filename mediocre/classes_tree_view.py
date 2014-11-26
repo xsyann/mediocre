@@ -13,7 +13,8 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QTreeView, QHBoxLayout, QGroupBox
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 
-from classes import Classes, Class
+from mediocre.classes import Classes, Class
+
 
 class TreeItem(QStandardItem):
 
@@ -39,8 +40,8 @@ class TreeItem(QStandardItem):
         self.model().mapChildren(self, method)
         return super(TreeItem, self).setCheckState(state)
 
-class TreeModel(QStandardItemModel):
 
+class TreeModel(QStandardItemModel):
     itemChecked = pyqtSignal(TreeItem)
 
     def __init__(self, parent=None):
@@ -55,6 +56,7 @@ class TreeModel(QStandardItemModel):
             item = parent.child(i)
             method(item)
             self.mapChildren(item, method)
+
 
 class ClassesTreeView(QTreeView):
 
@@ -71,16 +73,18 @@ class ClassesTreeView(QTreeView):
 
     def initUI(self):
         unchecked = [Classes.ENGLISH_ALPHABET, Classes.PUNCTUATION]
-        method = (lambda c: c.setCheckState(Qt.Checked if not c.data() in \
-                                                unchecked else Qt.Unchecked))
+        method = (lambda c: c.setCheckState(Qt.Checked if not c.data() in
+                                            unchecked else Qt.Unchecked))
         self.model.mapChildren(self.model.invisibleRootItem(), method)
 
     def getClasses(self):
-       classes = []
-       method = lambda child: classes.append(child.data()) \
-           if isinstance(child.data(), Class) and child.isActivated() else False
-       self.model.mapChildren(self.model.invisibleRootItem(), method)
-       return classes
+        classes = []
+        method = lambda child: (classes.append(child.data())
+                                if isinstance(child.data(), Class)
+                                and child.isActivated()
+                                else False)
+        self.model.mapChildren(self.model.invisibleRootItem(), method)
+        return classes
 
     def convertTree(self, tree):
         def cloneChildren(source, parent):

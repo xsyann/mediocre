@@ -9,8 +9,8 @@
 #     Update #: 10
 #
 
-class OCR(object):
 
+class OCR(object):
     MODEL_ANN = 0
     MODEL_KNEAREST = 1
 
@@ -53,7 +53,8 @@ class OCR(object):
 #            analyzer = Analyzer(self.__model, self.__dataset, trainRatio)
 #            analyzer.start()
  #       if self.__dataset.trainSampleCount > 0:
-        self.__model.train(self.__dataset.trainSamples, self.__dataset.trainResponses)
+        self.__model.train(self.__dataset.trainSamples,
+                           self.__dataset.trainResponses)
         #if verbose:
         #    analyzer.stop()
         #    analyzer.analyze()

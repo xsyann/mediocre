@@ -14,13 +14,12 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QToolButton, QMenu,
                              QWidgetAction, QListWidget, QListWidgetItem,
                              QLabel)
 
-class BrushSizeWidget(QToolButton):
 
+class BrushSizeWidget(QToolButton):
     ICON_SIZE = (12, 12)
     BUTTON_SIZE = (40, 30)
     ITEM_SIZE = (100, 20)
     MARGIN = 7
-
     brushSizeChanged = pyqtSignal(int)
 
     def __init__(self, size=10, min_size=1, max_size=100, parent=None):
@@ -46,7 +45,7 @@ class BrushSizeWidget(QToolButton):
         self.updateIcon()
 
     def connectUI(self):
-       self.listWidget.itemClicked.connect(self.selectSize)
+        self.listWidget.itemClicked.connect(self.selectSize)
 
     def selectSize(self, item):
         self.menu.close()
@@ -55,8 +54,8 @@ class BrushSizeWidget(QToolButton):
         self.brushSizeChanged.emit(self._size)
 
     def eventFilter(self, watched, event):
-        if event.type() == QEvent.KeyPress and \
-        event.matches(QKeySequence.InsertParagraphSeparator):
+        if (event.type() == QEvent.KeyPress and
+            event.matches(QKeySequence.InsertParagraphSeparator)):
             self.selectSize(self.listWidget.currentItem())
         return super(BrushSizeWidget, self).eventFilter(watched, event)
 
@@ -68,7 +67,7 @@ class BrushSizeWidget(QToolButton):
         w, h = self.ITEM_SIZE
         scroll_size = 16
         listWidget.setFixedWidth(w + scroll_size)
-        listWidget.setAttribute(Qt.WA_MacShowFocusRect, False);
+        listWidget.setAttribute(Qt.WA_MacShowFocusRect, False)
         for x in xrange(self._min_size, self._max_size):
             h = max(x + self.MARGIN * 2.0, h)
             pixmap = QPixmap(w, h)
@@ -105,3 +104,4 @@ class BrushSizeWidget(QToolButton):
         self.setIconSize(QSize(w, h))
 
 
+__all__ = ["BrushSizeWidget"]

@@ -19,8 +19,9 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
 from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal
 from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
 
-from dataset import Dataset
-from ocr import OCR
+from mediocre.dataset import Dataset
+from mediocre.ocr import OCR
+
 
 class TrainingWidgetUI(object):
 
@@ -68,11 +69,10 @@ class TrainingWidgetUI(object):
         layout.addWidget(self.outputText)
         self.setLayout(layout)
 
-class TrainingWidget(QWidget, TrainingWidgetUI):
 
+class TrainingWidget(QWidget, TrainingWidgetUI):
     MODE_ANN = "Neural Network"
     MODE_KNEAREST = "K-Nearest"
-
     __modes = [MODE_ANN, MODE_KNEAREST]
 
     def __init__(self, classes_tree, parent=None):
@@ -119,7 +119,7 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         modes = {
             self.MODE_ANN: OCR.MODEL_ANN,
             self.MODE_KNEAREST: OCR.MODEL_KNEAREST
-            }
+        }
         mode = modes[self.__modes[self.mode.currentIndex()]]
         print mode
         classes = self._classes_tree.getClasses()
@@ -128,3 +128,6 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         ocr.trainModel(self._dataset, classes, mode, self.trainRatio.value(),
                        self.maxPerClass.value())
         # ocr.saveModel()
+
+
+__all__ = ["TrainingWidget"]

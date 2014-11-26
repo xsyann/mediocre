@@ -12,7 +12,8 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QMainWindow, QApplication)
 
-from window_ui import WindowUI
+from mediocre.window_ui import WindowUI
+
 
 class Window(QMainWindow, WindowUI):
 

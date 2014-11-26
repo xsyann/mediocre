@@ -13,11 +13,14 @@ import os
 import string
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 
+
 class TreeModel(QStandardItemModel):
     pass
 
+
 class TreeItem(QStandardItem):
     pass
+
 
 class Class:
     def __init__(self, value, repr, folder):
@@ -25,8 +28,8 @@ class Class:
         self.repr = repr
         self.folder = folder
 
-class Classes:
 
+class Classes:
     ENGLISH_ALPHABET = "English Alphabet"
     UPPER = "Upper case"
     LOWER = "Lower case"
@@ -99,7 +102,7 @@ class Classes:
             '|': ('pipe', 'pipe'), '+': ('plus', 'plus'),
             '*': ('star', 'star'),
             '~': ('tilde', 'tilde'), '_': ('underscore', 'under')
-            }
+        }
 
         punc = Classes._addGroup(model, Classes.PUNCTUATION)
         commonGroup = Classes._addGroup(punc, Classes.COMMON_PUNC)
@@ -107,7 +110,7 @@ class Classes:
         for sym in list(string.punctuation + ' '):
             is_sym, is_punc = sym in symbols, sym in punctuation
             if is_sym or is_punc:
-                repr, name = symbols[sym] if is_sym  else punctuation[sym]
+                repr, name = symbols[sym] if is_sym else punctuation[sym]
                 parent = commonGroup if is_punc else symbolGroup
                 repr = "{0} ({1})".format(sym, repr.capitalize())
                 Classes._addClass(parent, sym, repr,
@@ -122,4 +125,3 @@ class Classes:
             Classes._addPunctuationClasses(model)
             Classes.classes = model
         return Classes.classes
-

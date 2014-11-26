@@ -13,12 +13,11 @@ import sys
 from PyQt5.QtWidgets import QApplication, QStyleFactory
 from PyQt5.QtGui import QPalette, QColor
 
-from window import Window
+from mediocre.window import Window
 
 APP_NAME = 'Mediocre'
 
 def main():
-
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
     main = Window()

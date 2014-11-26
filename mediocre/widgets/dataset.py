@@ -18,9 +18,10 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
 from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal
 from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
 
-from paint_area import PaintArea
-from brush_size_widget import BrushSizeWidget
-from dataset import Dataset, RandomParam
+from mediocre.dataset import Dataset, RandomParam
+from mediocre.paint_area import PaintArea
+from mediocre.widgets import BrushSizeWidget
+
 
 class ImageLabel(QLabel):
 
@@ -32,10 +33,11 @@ class ImageLabel(QLabel):
         self._resize = True
 
     def resizeEvent(self, event):
-        self.scaled = self.pixmap.scaledToHeight(self.parent.widget.size().height(),
-                                                 Qt.SmoothTransformation)
-        self.setPixmap(self.scaled)
+        height = self.parent.widget.size().height()
+        scaled = self.pixmap.scaledToHeight(height, Qt.SmoothTransformation)
+        self.setPixmap(scaled)
         super(ImageLabel, self).resizeEvent(event)
+
 
 class PreviewWidget(QScrollArea):
 
@@ -62,6 +64,7 @@ class PreviewWidget(QScrollArea):
     def addPixmap(self, pixmap):
         label = ImageLabel(pixmap, self)
         self.layout.insertWidget(0, label)
+
 
 class DatasetWidgetUI(object):
 
@@ -137,10 +140,10 @@ class DatasetWidgetUI(object):
 
     def toolbarWidget(self):
         self.brushSizeWidget = BrushSizeWidget(self.brush_size, max_size=70)
-        self.clearAction = QAction(QIcon('assets/clear.png'), 'Clear', self)
-        self.saveAction = QAction(QIcon('assets/save.png'), 'Save', self)
-        self.removeAction = QAction(QIcon('assets/remove.png'), 'Remove', self)
-        self.previewAction = QAction(QIcon('assets/preview.png'), 'Preview', self)
+        self.clearAction = QAction(QIcon("assets/clear.png"), "Clear", self)
+        self.saveAction = QAction(QIcon("assets/save.png"), "Save", self)
+        self.removeAction = QAction(QIcon("assets/remove.png"), "Remove", self)
+        self.previewAction = QAction(QIcon("assets/preview.png"), "Preview", self)
 
         toolbar = QToolBar()
         toolbar.setIconSize(QSize(30, 30))
@@ -180,8 +183,8 @@ class DatasetWidgetUI(object):
         layout.addWidget(self.folderWidget())
         self.setLayout(layout)
 
-class DatasetWidget(QWidget, DatasetWidgetUI):
 
+class DatasetWidget(QWidget, DatasetWidgetUI):
     FORMAT = "bmp"
 
     def __init__(self, classes_tree, parent=None):
@@ -223,9 +226,9 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
         self.zAngle.setValue(12)
 
     def eventFilter(self, watched, event):
-        if event.type() == QEvent.KeyPress and \
-                (event.matches(QKeySequence.InsertParagraphSeparator) or \
-                event.key() == Qt.Key_Space):
+        if (event.type() == QEvent.KeyPress and
+            (event.matches(QKeySequence.InsertParagraphSeparator) or
+             event.key() == Qt.Key_Space)):
             self.save()
         return super(DatasetWidget, self).eventFilter(watched, event)
 
@@ -260,7 +263,8 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
         self._dataset.addDatum(self.prefixLine.text(), cl, pixmap, self.FORMAT)
         randoms = self.generateRandom()
         for random in randoms:
-            self._dataset.addDatum(self.prefixLine.text(), cl, random, self.FORMAT)
+            self._dataset.addDatum(self.prefixLine.text(), cl, random,
+                                   self.FORMAT)
         del self._last[:]
         self._last.append(pixmap)
         self._last.extend(randoms)
@@ -319,3 +323,6 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
         randoms = self.generateRandom()
         for random in randoms:
             self.previewWidget.addPixmap(random)
+
+
+__all__ = ["DatasetWidget"]

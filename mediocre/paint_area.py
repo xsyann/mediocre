@@ -11,10 +11,12 @@
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsLineItem,
-                             QGraphicsRectItem, QGraphicsItemGroup, QGraphicsScale)
+                             QGraphicsRectItem, QGraphicsItemGroup,
+                             QGraphicsScale)
 from PyQt5.QtCore import QLineF, QPointF, QRectF, QSizeF
-from PyQt5.QtGui import (QPen, QBrush, QCursor, QPainter, QPixmap, QFont, QColor,
-                         QTransform, QVector3D)
+from PyQt5.QtGui import (QPen, QBrush, QCursor, QPainter, QPixmap, QFont,
+                         QColor, QTransform, QVector3D)
+
 
 class PaintArea(QGraphicsView):
     def __init__(self, width=10, parent=None):
@@ -117,7 +119,8 @@ class PaintArea(QGraphicsView):
             self.scene().addItem(self._instructions)
 
     def getLines(self):
-        items = [item for item in self.scene().items() if item.group() == self._items]
+        items = [item for item in self.scene().items()
+                 if item.group() == self._items]
         return self.canvas(), items
 
     def clear(self):

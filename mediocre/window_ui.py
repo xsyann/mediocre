@@ -14,9 +14,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget,
                              QWidget, QSplitter)
 
-from classes_tree_view import ClassesTreeView
-from dataset_widget import DatasetWidget
-from training_widget import TrainingWidget
+from mediocre.classes_tree_view import ClassesTreeView
+from mediocre.widgets import TrainingWidget, DatasetWidget
+
 
 class WindowUI(object):
 
@@ -52,4 +52,3 @@ class WindowUI(object):
         mainLayout.addWidget(self.hsplitter)
         mainWidget.setLayout(mainLayout)
         self.setCentralWidget(mainWidget)
-
