@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 12 16:35:10 2014 (+0100)
-# Last-Updated: Wed Nov 26 15:13:48 2014 (+0100)
+# Last-Updated: Wed Nov 26 15:50:45 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 1556
+#     Update #: 1568
 #
 
 import os
@@ -188,7 +188,7 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
         super(DatasetWidget, self).__init__(parent)
         self._classes_tree = classes_tree
         self._dataset = None
-        self._randoms = None
+        self._last = []
         self.brush_size = 20
         self.setupUI()
         self.connectUI()
@@ -261,6 +261,9 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
         randoms = self.generateRandom()
         for random in randoms:
             self._dataset.addDatum(self.prefixLine.text(), cl, random, self.FORMAT)
+        del self._last[:]
+        self._last.append(pixmap)
+        self._last.extend(randoms)
         return [pixmap] + randoms
 
     ########################################################
@@ -287,12 +290,14 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
             self.paintArea.setFrame(self.widthBox.value(), height)
 
     def removeLast(self):
-       if self._dataset:
-           if self._dataset.removeLast():
-               self._index = (self._index - 1) % len(self._classes)
-               self.previewWidget.removeLast()
-               self.displayInstructions()
-               self.clear()
+        if self._last:
+            self._index = (self._index - 1) % len(self._classes)
+            for last in self._last:
+                if self._dataset.removeLast():
+                    self.previewWidget.removeLast()
+            del self._last[:]
+            self.displayInstructions()
+            self.clear()
 
     def clear(self):
         self.paintArea.clear()
