@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Sun Nov  9 15:07:41 2014 (+0100)
-# Last-Updated: Wed Nov 26 15:14:04 2014 (+0100)
+# Last-Updated: Wed Nov 26 22:53:17 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 432
+#     Update #: 438
 #
 
 from PyQt5 import QtCore
@@ -16,11 +16,12 @@ from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget,
 
 from classes_tree_view import ClassesTreeView
 from dataset_widget import DatasetWidget
+from training_widget import TrainingWidget
 
 class WindowUI(object):
 
     def widgetTraining(self):
-        return QWidget()
+        return TrainingWidget(self.classes_tree_view)
 
     def widgetRecognition(self):
         return QWidget()

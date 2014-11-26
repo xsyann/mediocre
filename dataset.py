@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Mon Nov 10 14:30:25 2014 (+0100)
-# Last-Updated: Wed Nov 26 15:06:14 2014 (+0100)
+# Last-Updated: Wed Nov 26 23:14:27 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 188
+#     Update #: 200
 #
 
 import os
@@ -29,6 +29,7 @@ class Dataset(object):
 
     def __init__(self, folder):
         self._folder = folder
+        self._classes = None
         self._last = []
 
     def addDatum(self, prefix, cl, pixmap, format):
@@ -65,6 +66,9 @@ class Dataset(object):
         while os.path.isfile("{0}.{1}.{2}".format(filename, i, ext)):
             i += 1
         return "{0}.{1}.{2}".format(filename, i, ext)
+
+    def folder(self):
+        return self._folder
 
     def setFolder(self, folder):
         self._folder = folder
@@ -111,3 +115,62 @@ class Dataset(object):
         for i in xrange(params.count):
             pixmaps.append(self.generateRandom(scene, group, canvas, params))
         return pixmaps
+
+    def preprocess(self, classes, maxPerClass, trainRatio):
+        self.maxPerClass = maxPerClass
+        self.trainRatio = trainRatio
+        self.classes = classes
+#        self.__stackArrays(self.__getItems(trainRatio))
+        self.__getItems(trainRatio)
+
+    def __getItems(self, trainRatio):
+        """Create dataset items.
+        """
+        trainItems = []
+        testItems = []
+        for cl in self.classes:
+            print os.path.join(self._folder, cl.folder)
+#            images = self.__getImages(cl.folder)
+#            random.shuffle(images)
+#            currentClassItems = []
+#            for i, image in enumerate(images):
+#                if i >= self.maxPerClass:
+#                    break
+#                item = DatasetItem()
+#                item.loadFromFile(image)
+#                item.classification = label
+#                currentClassItems.append(item)
+#            trainCount = int(np.ceil(min(len(images), self.maxPerClass) * trainRatio))
+#            trainItems.extend(currentClassItems[:trainCount])
+#            testItems.extend(currentClassItems[trainCount:])
+#        return (trainItems, testItems)
+
+    def __getImages(self, folder):
+        """Returns a list of all images in folder.
+        """
+        imgExt = [".bmp", ".png"]
+        images = []
+        if os.path.isdir(folder):
+            for file in os.listdir(folder):
+                filename, ext = os.path.splitext(file)
+                if ext.lower() in imgExt:
+                    images.append(os.path.join(folder, file))
+        return images
+
+    def __stackArraysAux(self, items):
+        """Create samples and responses arrays.
+        """
+        if not items:
+            return (np.array([]), np.array([]))
+        samples = []
+        responses = []
+        nClass = self.classificationCount
+        for item in items:
+            responses.append(self.__classifications.index(item.classification))
+            samples.append(item.sample)
+        return (np.vstack(samples), np.array(responses))
+
+    def __stackArrays(self, items):
+        trainItems, testItems = items
+        self.trainSamples, self.trainResponses = self.__stackArraysAux(trainItems)
+        self.testSamples, self.testResponses = self.__stackArraysAux(testItems)

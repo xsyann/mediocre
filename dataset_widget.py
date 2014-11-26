@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 12 16:35:10 2014 (+0100)
-# Last-Updated: Wed Nov 26 15:50:45 2014 (+0100)
+# Last-Updated: Wed Nov 26 23:15:18 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 1568
+#     Update #: 1574
 #
 
 import os
@@ -280,6 +280,7 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
         file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if file:
             self.datasetFolder.setText(file)
+            self._dataset.setFolder(file)
 
     def widthChanged(self, width):
         if self.heightBox.value():

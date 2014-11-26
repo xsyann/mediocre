@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:35:40 2014 (+0100)
-# Last-Updated: Wed Nov 26 14:22:55 2014 (+0100)
+# Last-Updated: Wed Nov 26 23:15:29 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 1078
+#     Update #: 1080
 #
 
 from PyQt5.QtCore import Qt
