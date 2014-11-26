@@ -4,23 +4,31 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:06:45 2014 (+0100)
-# Last-Updated: Wed Nov 26 23:10:37 2014 (+0100)
+# Last-Updated: Thu Nov 27 00:07:46 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 78
+#     Update #: 98
 #
 
 import os
+import sys
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QLabel, QToolBar, QSizePolicy, QFileDialog,
                              QLineEdit, QScrollArea, QGroupBox, QSpinBox,
                              QComboBox, QSpinBox, QSplitter, QTextEdit,
-                             QGridLayout)
-from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal
-from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
+                             QGridLayout, QApplication)
+from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal, QObject
+from PyQt5.QtGui import (QFont, QKeySequence, QIcon, QPixmap, QPainter,
+                         QTextCursor)
 
 from dataset import Dataset
 from ocr import OCR
+
+class EmittingStream(QObject):
+    textWritten = pyqtSignal(str)
+
+    def write(self, text):
+        self.textWritten.emit(str(text))
 
 class TrainingWidgetUI(object):
 
@@ -83,6 +91,10 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         self.connectUI()
         self.initUI()
         self._dataset = Dataset(self.datasetFolder.text())
+        sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
+
+    def __del__(self):
+        sys.stdout = sys.__stdout__
 
     def populateUI(self):
         for mode in self.__modes:
@@ -107,6 +119,15 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
     ########################################################
     # Signals handlers
 
+    def normalOutputWritten(self, text):
+        """Append text to debug infos.
+        """
+        cursor = self.outputText.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self.outputText.setTextCursor(cursor)
+        QApplication.processEvents()
+
     def selectFolder(self):
         file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if file:
@@ -114,17 +135,13 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
             self._dataset.setFolder(file)
 
     def train(self):
-        print self.maxPerClass.value()
-        print self.trainRatio.value()
         modes = {
             self.MODE_ANN: OCR.MODEL_ANN,
             self.MODE_KNEAREST: OCR.MODEL_KNEAREST
             }
         mode = modes[self.__modes[self.mode.currentIndex()]]
-        print mode
         classes = self._classes_tree.getClasses()
-        self.outputText.setText("Ta mere")
         ocr = OCR()
         ocr.trainModel(self._dataset, classes, mode, self.trainRatio.value(),
                        self.maxPerClass.value())
-        # ocr.saveModel()
+        ocr.saveModel()
