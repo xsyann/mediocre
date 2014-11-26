@@ -2,9 +2,9 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:51:54 2014 (+0100)
-# Last-Updated: Fri Nov 14 20:37:24 2014 (+0100)
+# Last-Updated: Wed Nov 26 14:25:13 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 426
+#     Update #: 430
 #
 
 from PyQt5.QtCore import Qt, QSize, QRectF, QEvent, QRect, QPointF, pyqtSignal
@@ -23,7 +23,7 @@ class BrushSizeWidget(QToolButton):
 
     brushSizeChanged = pyqtSignal(int)
 
-    def __init__(self, size=10, min_size=1, max_size=50, parent=None):
+    def __init__(self, size=10, min_size=1, max_size=100, parent=None):
         super(BrushSizeWidget, self).__init__(parent)
         self._size = size
         self._min_size = min_size
@@ -59,6 +59,9 @@ class BrushSizeWidget(QToolButton):
         event.matches(QKeySequence.InsertParagraphSeparator):
             self.selectSize(self.listWidget.currentItem())
         return super(BrushSizeWidget, self).eventFilter(watched, event)
+
+    def value(self):
+        return self._size
 
     def createListWidget(self):
         listWidget = QListWidget()

@@ -4,24 +4,25 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:35:40 2014 (+0100)
-# Last-Updated: Thu Nov 20 21:53:25 2014 (+0100)
+# Last-Updated: Wed Nov 26 14:22:55 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 520
+#     Update #: 1078
 #
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsLineItem,
-                             QGraphicsRectItem)
+                             QGraphicsRectItem, QGraphicsItemGroup, QGraphicsScale)
 from PyQt5.QtCore import QLineF, QPointF, QRectF, QSizeF
-from PyQt5.QtGui import QPen, QBrush, QCursor, QPainter, QPixmap, QFont, QColor
+from PyQt5.QtGui import (QPen, QBrush, QCursor, QPainter, QPixmap, QFont, QColor,
+                         QTransform, QVector3D)
 
 class PaintArea(QGraphicsView):
     def __init__(self, width=10, parent=None):
         QGraphicsView.__init__(self, parent)
         self._frame = None
         self._instructions = None
-        self._text = ""
         self.setScene(QGraphicsScene(self))
+        self._items = self.scene().createItemGroup([])
         self.setMouseTracking(True)
         self.pen = QPen(Qt.black, width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         self.painting = False
@@ -30,29 +31,48 @@ class PaintArea(QGraphicsView):
         self.updateScene()
 
     def updateScene(self):
-        self.scene().setBackgroundBrush(Qt.gray)
+        if self._frame:
+            self.scene().setBackgroundBrush(Qt.gray)
+        oldCanvas = self.canvas()
         self.setSceneRect(QRectF(self.contentsRect()))
+        self.centerScene()
+        self.scaleItems(oldCanvas, self.canvas())
+
+    def centerScene(self):
         self.centerFrame()
         self.centerInstructions()
 
+    def scaleItems(self, oldCanvas, newCanvas):
+        pass
+
+    def canvas(self):
+        if self._frame:
+            return self._frame.rect()
+        return QRectF(self.contentsRect())
+
+    def fitInstructions(self):
+        textSize = self._instructions.document().size()
+        factor = min(self.canvas().size().width() / textSize.width(),
+                     self.canvas().size().height() / textSize.height())
+        f = self._instructions.font()
+        f.setPointSizeF(f.pointSizeF() * factor)
+        self._instructions.setFont(f)
+
     def centerInstructions(self):
         if self._instructions:
-            textSize = self._instructions.document().size()
-            factor = min(self._frame.boundingRect().size().width() / textSize.width(),
-                         self._frame.boundingRect().size().height() / textSize.height())
+            self.fitInstructions()
             size = self.size()
-            f = self._instructions.font()
-            f.setPointSizeF(f.pointSizeF() * factor)
-            self._instructions.setFont(f)
             textSize = self._instructions.document().size()
             self._instructions.setPos((size.width() - textSize.width()) / 2.0,
                                       (size.height() - textSize.height()) / 2.0)
 
     def setInstructions(self, text):
         if self._instructions:
-            self.scene().removeItem(self._instructions)
-        self._instructions = self.scene().addText(text, QFont('Arial', 50, QFont.Bold))
-        self._instructions.setDefaultTextColor(QColor(220, 220, 220))
+            self._instructions.setPlainText(text)
+        else:
+            self._instructions = self.scene().addText(text, QFont('Arial', 10, QFont.Bold))
+            self._instructions.setZValue(-1)
+            self._instructions.setDefaultTextColor(QColor(220, 220, 220))
         self._text = text
         self.centerInstructions()
 
@@ -61,12 +81,13 @@ class PaintArea(QGraphicsView):
             self._frame.setRect(0, 0, width, height)
         else:
             self.addFrame(QRectF(0, 0, width, height))
-        self.updateScene()
+        self.centerScene()
 
     def addFrame(self, rect):
         self._frame = QGraphicsRectItem(rect)
         self._frame.setPen(QPen(Qt.NoPen))
         self._frame.setBrush(Qt.white)
+        self._frame.setZValue(-2)
         self.scene().addItem(self._frame)
 
     def centerFrame(self):
@@ -90,22 +111,19 @@ class PaintArea(QGraphicsView):
     def render(self, painter):
         if self._instructions:
             self.scene().removeItem(self._instructions)
-            self._instructions = None
         self.scene().render(painter,
-                            source=self._frame.rect())
+                            source=self.canvas())
+        if self._instructions:
+            self.scene().addItem(self._instructions)
+
+    def getLines(self):
+        items = [item for item in self.scene().items() if item.group() == self._items]
+        return self.canvas(), items
 
     def clear(self):
-        rect = None
-        if self._frame:
-            rect = self._frame.rect()
-        self.scene().clear()
-        self._instructions = None
-        self.setScene(QGraphicsScene())
-        if rect:
-            self.addFrame(rect)
-        if self._text:
-            self.setInstructions(self._text)
-        self.updateScene()
+        for item in self.scene().items():
+            if item.group() == self._items:
+                self._items.removeFromGroup(item)
 
     def getCursor(self):
         antialiasing_margin = 1
@@ -120,15 +138,22 @@ class PaintArea(QGraphicsView):
         painter.end()
         return QCursor(pixmap)
 
+    def addLine(self, start, end):
+        if start == end:
+            delta = QPointF(.0001, 0)
+            end = start - delta
+        line = self.scene().addLine(QLineF(start, end), self.pen)
+        self._items.addToGroup(line)
+
     def drawPoint(self, pos):
         delta = QPointF(.0001, 0)
-        self.scene().addLine(QLineF(pos, pos - delta), self.pen)
+        line = self.scene().addLine(QLineF(pos, pos - delta), self.pen)
+        self._items.addToGroup(line)
 
     def mousePressEvent(self, event):
         self.start = QPointF(self.mapToScene(event.pos()))
         self.painting = True
-        w = self.pen.width()
-        self.drawPoint(self.start)
+        self.addLine(self.start, self.start)
 
     def mouseReleaseEvent(self, event):
         self.painting = False
@@ -136,6 +161,5 @@ class PaintArea(QGraphicsView):
     def mouseMoveEvent(self, event):
         pos = QPointF(self.mapToScene(event.pos()))
         if self.painting:
-            brush = QBrush(Qt.SolidPattern)
-            self.scene().addLine(QLineF(self.start, pos), self.pen)
+            self.addLine(self.start, pos)
             self.start = pos

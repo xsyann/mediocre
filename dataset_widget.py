@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 12 16:35:10 2014 (+0100)
-# Last-Updated: Thu Nov 20 21:56:24 2014 (+0100)
+# Last-Updated: Wed Nov 26 15:13:48 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 1346
+#     Update #: 1556
 #
 
 import os
@@ -14,13 +14,13 @@ import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QLabel, QToolBar, QSizePolicy, QAction, QLineEdit,
                              QScrollArea, QGroupBox, QSpinBox, QFileDialog,
-                             QSpinBox)
+                             QSpinBox, QSplitter, QGridLayout)
 from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal
 from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
 
 from paint_area import PaintArea
 from brush_size_widget import BrushSizeWidget
-from dataset import Dataset
+from dataset import Dataset, RandomParam
 
 class ImageLabel(QLabel):
 
@@ -63,59 +63,7 @@ class PreviewWidget(QScrollArea):
         label = ImageLabel(pixmap, self)
         self.layout.insertWidget(0, label)
 
-class DatasetWidget(QWidget):
-
-    FORMAT = "bmp"
-
-    def __init__(self, classes_tree, parent=None):
-        super(DatasetWidget, self).__init__(parent)
-        self._classes_tree = classes_tree
-        self._dataset = None
-        self.brush_size = 20
-        self.setupUI()
-        self.connectUI()
-        self.initUI()
-        self.reloadClasses()
-
-    def setupUI(self):
-        layout = QVBoxLayout()
-        self.paintArea = PaintArea(self.brush_size)
-        self.paintArea.installEventFilter(self)
-        self.previewWidget = PreviewWidget()
-        layout.addWidget(self.toolbarWidget())
-        hbox = QHBoxLayout()
-        hbox.addWidget(self.randomWidget())
-        hbox.addWidget(self.paintArea)
-        layout.addLayout(hbox)
-        layout.addWidget(self.previewWidget)
-        layout.addWidget(self.folderWidget())
-        self.setLayout(layout)
-        self.widthBox.setRange(5, 5000)
-        self.heightBox.setRange(5, 5000)
-        self.widthBox.setValue(150)
-        self.heightBox.setValue(150)
-        self.paintArea.setFrame(self.widthBox.value(), self.heightBox.value())
-
-    def initUI(self):
-        folder = os.path.join(os.path.dirname(__file__), "dataset")
-        self.datasetFolder.setText(folder)
-
-    def connectUI(self):
-        self.brushSizeWidget.brushSizeChanged.connect(self.setBrushSize)
-        self.clearAction.triggered.connect(self.clear)
-        self.saveAction.triggered.connect(self.save)
-        self.removeAction.triggered.connect(self.removeLast)
-        self._classes_tree.model.itemChecked.connect(self.reloadClasses)
-        self.selectFolderButton.clicked.connect(self.selectFolder)
-        self.widthBox.valueChanged.connect(self.widthChanged)
-        self.heightBox.valueChanged.connect(self.heightChanged)
-
-    def eventFilter(self, watched, event):
-        if event.type() == QEvent.KeyPress and \
-                (event.matches(QKeySequence.InsertParagraphSeparator) or \
-                event.key() == Qt.Key_Space):
-            self.save()
-        return super(DatasetWidget, self).eventFilter(watched, event)
+class DatasetWidgetUI(object):
 
     def folderWidget(self):
         widget = QWidget()
@@ -156,25 +104,30 @@ class DatasetWidget(QWidget):
 
     def randomWidget(self):
         group = QGroupBox("Randomize")
-        countLayout = QHBoxLayout()
+        layout = QGridLayout()
         self.randomCount = QSpinBox()
-        countLayout.addWidget(QLabel(self.tr("Count")))
-        countLayout.addWidget(self.randomCount)
-        countLayout.addStretch(1)
-        layout = QVBoxLayout()
-        self.minBrushSize = BrushSizeWidget(3)
-        self.maxBrushSize = BrushSizeWidget(20)
-        brushSizeRange = QHBoxLayout()
-        brushSizeRange.addWidget(QLabel(self.tr("Min")))
-        brushSizeRange.addWidget(self.minBrushSize)
-        brushSizeRange.addStretch(1)
-        brushSizeRange.addWidget(QLabel(self.tr("Max")))
-        brushSizeRange.addWidget(self.maxBrushSize)
-        layout.addLayout(countLayout)
-        layout.addLayout(brushSizeRange)
-        layout.addStretch(1)
-        group.setLayout(layout)
-        group.setFixedWidth(200)
+        layout.addWidget(QLabel(self.tr("Count")), 0, 0)
+        layout.addWidget(self.randomCount, 0, 1)
+        self.minBrushSize = BrushSizeWidget(15)
+        self.maxBrushSize = BrushSizeWidget(50)
+        layout.addWidget(QLabel(self.tr("Min")), 1, 0)
+        layout.addWidget(self.minBrushSize, 1, 1)
+        layout.addWidget(QLabel(self.tr("Max")), 2, 0)
+        layout.addWidget(self.maxBrushSize, 2, 1)
+        self.xAngle = QSpinBox()
+        self.yAngle = QSpinBox()
+        self.zAngle = QSpinBox()
+        layout.addWidget(QLabel(self.tr("Angle X")), 3, 0)
+        layout.addWidget(self.xAngle, 3, 1)
+        layout.addWidget(QLabel(self.tr("Angle Y")), 4, 0)
+        layout.addWidget(self.yAngle, 4, 1)
+        layout.addWidget(QLabel(self.tr("Angle Z")), 5, 0)
+        layout.addWidget(self.zAngle, 5, 1)
+        container = QVBoxLayout()
+        container.addLayout(layout)
+        container.addStretch(1)
+        group.setLayout(container)
+        group.setFixedWidth(150)
         return group
 
     def toolbarSpacer(self):
@@ -183,24 +136,135 @@ class DatasetWidget(QWidget):
         return spacer
 
     def toolbarWidget(self):
-        self.brushSizeWidget = BrushSizeWidget(self.brush_size)
+        self.brushSizeWidget = BrushSizeWidget(self.brush_size, max_size=70)
         self.clearAction = QAction(QIcon('assets/clear.png'), 'Clear', self)
         self.saveAction = QAction(QIcon('assets/save.png'), 'Save', self)
         self.removeAction = QAction(QIcon('assets/remove.png'), 'Remove', self)
+        self.previewAction = QAction(QIcon('assets/preview.png'), 'Preview', self)
 
         toolbar = QToolBar()
-
         toolbar.setIconSize(QSize(30, 30))
         toolbar.addWidget(self.brushSizeWidget)
         toolbar.addSeparator()
         toolbar.addAction(self.clearAction)
         toolbar.addAction(self.saveAction)
         toolbar.addAction(self.removeAction)
+        toolbar.addAction(self.removeAction)
+        toolbar.addAction(self.previewAction)
         toolbar.addSeparator()
         toolbar.addWidget(self.sizeWidget())
         toolbar.addWidget(self.prefixWidget())
         toolbar.addWidget(self.toolbarSpacer())
         return toolbar
+
+    def setupUI(self):
+        layout = QVBoxLayout()
+        self.paintArea = PaintArea(self.brush_size)
+        self.paintArea.installEventFilter(self)
+        self.previewWidget = PreviewWidget()
+        layout.addWidget(self.toolbarWidget())
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.randomWidget())
+        hbox.addWidget(self.paintArea)
+        up = QWidget()
+        up.setLayout(hbox)
+        down = QWidget()
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.previewWidget)
+        down.setLayout(hbox)
+        self.vsplitter = QSplitter(Qt.Vertical)
+        self.vsplitter.addWidget(up)
+        self.vsplitter.addWidget(down)
+        self.vsplitter.setStretchFactor(1, 3)
+        layout.addWidget(self.vsplitter)
+        layout.addWidget(self.folderWidget())
+        self.setLayout(layout)
+
+class DatasetWidget(QWidget, DatasetWidgetUI):
+
+    FORMAT = "bmp"
+
+    def __init__(self, classes_tree, parent=None):
+        super(DatasetWidget, self).__init__(parent)
+        self._classes_tree = classes_tree
+        self._dataset = None
+        self._randoms = None
+        self.brush_size = 20
+        self.setupUI()
+        self.connectUI()
+        self.initUI()
+        self.reloadClasses()
+        self._dataset = Dataset(self.datasetFolder.text())
+
+    def connectUI(self):
+        self.brushSizeWidget.brushSizeChanged.connect(self.setBrushSize)
+        self.clearAction.triggered.connect(self.clear)
+        self.saveAction.triggered.connect(self.save)
+        self.removeAction.triggered.connect(self.removeLast)
+        self.previewAction.triggered.connect(self.previewMode)
+        self._classes_tree.model.itemChecked.connect(self.reloadClasses)
+        self.selectFolderButton.clicked.connect(self.selectFolder)
+        self.widthBox.valueChanged.connect(self.widthChanged)
+        self.heightBox.valueChanged.connect(self.heightChanged)
+
+    def initUI(self):
+        folder = os.path.join(os.path.dirname(__file__), "dataset")
+        self.datasetFolder.setText(folder)
+        self.widthBox.setRange(5, 5000)
+        self.heightBox.setRange(5, 5000)
+        self.widthBox.setValue(150)
+        self.heightBox.setValue(150)
+        self.randomCount.setValue(5)
+        self.xAngle.setRange(0, 360)
+        self.yAngle.setRange(0, 360)
+        self.zAngle.setRange(0, 360)
+        self.xAngle.setValue(70)
+        self.yAngle.setValue(50)
+        self.zAngle.setValue(12)
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.KeyPress and \
+                (event.matches(QKeySequence.InsertParagraphSeparator) or \
+                event.key() == Qt.Key_Space):
+            self.save()
+        return super(DatasetWidget, self).eventFilter(watched, event)
+
+    ########################################################
+    # Utils
+
+    def displayInstructions(self):
+        if not self._classes:
+            self.paintArea.setInstructions("")
+        else:
+            class_name = self._classes[self._index].repr
+            self.paintArea.setInstructions(class_name)
+
+    def generateRandom(self):
+        canvas, lines = self.paintArea.getLines()
+        params = RandomParam(self.randomCount.value(), self.widthBox.value(),
+                             self.heightBox.value(), self.minBrushSize.value(),
+                             self.maxBrushSize.value(), self.xAngle.value(),
+                             self.yAngle.value(), self.zAngle.value())
+        randoms = self._dataset.generateData(canvas, lines, params)
+        return randoms
+
+    def saveImages(self):
+        cl = self._classes[self._index]
+        pixmap = QPixmap(self.widthBox.value(), self.heightBox.value())
+        pixmap.fill(Qt.white)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        self.paintArea.render(painter)
+        painter.end()
+        self._dataset.setFolder(self.datasetFolder.text())
+        self._dataset.addDatum(self.prefixLine.text(), cl, pixmap, self.FORMAT)
+        randoms = self.generateRandom()
+        for random in randoms:
+            self._dataset.addDatum(self.prefixLine.text(), cl, random, self.FORMAT)
+        return [pixmap] + randoms
+
+    ########################################################
+    # Signals handlers
 
     def reloadClasses(self):
         self.clear()
@@ -214,18 +278,13 @@ class DatasetWidget(QWidget):
         if file:
             self.datasetFolder.setText(file)
 
-    def displayInstructions(self):
-        if not self._classes:
-            self.paintArea.setInstructions("")
-        else:
-            class_name = self._classes[self._index].repr
-            self.paintArea.setInstructions(class_name)
-
     def widthChanged(self, width):
-        self.paintArea.setFrame(width, self.heightBox.value())
+        if self.heightBox.value():
+            self.paintArea.setFrame(width, self.heightBox.value())
 
     def heightChanged(self, height):
-        self.paintArea.setFrame(self.widthBox.value(), height)
+        if self.widthBox.value():
+            self.paintArea.setFrame(self.widthBox.value(), height)
 
     def removeLast(self):
        if self._dataset:
@@ -233,32 +292,24 @@ class DatasetWidget(QWidget):
                self._index = (self._index - 1) % len(self._classes)
                self.previewWidget.removeLast()
                self.displayInstructions()
+               self.clear()
 
     def clear(self):
         self.paintArea.clear()
 
-    def saveImage(self):
-        cl = self._classes[self._index]
-        pixmap = QPixmap(self.widthBox.value(), self.heightBox.value())
-        pixmap.fill(Qt.white)
-        painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        self.paintArea.render(painter)
-        painter.end()
-        if not self._dataset:
-            self._dataset = Dataset(self.datasetFolder.text())
-        else:
-            self._dataset.setFolder(self.datasetFolder.text())
-        self._dataset.addDatum(self.prefixLine.text(), cl, pixmap, self.FORMAT)
-        return pixmap
-
     def save(self):
         if self._classes:
-            pixmap = self.saveImage()
+            pixmaps = self.saveImages()
             self._index = (self._index + 1) % len(self._classes)
             self.displayInstructions()
-            self.previewWidget.addPixmap(pixmap)
+            for pixmap in pixmaps:
+                self.previewWidget.addPixmap(pixmap)
             self.clear()
 
     def setBrushSize(self, size):
         self.paintArea.setBrushSize(size)
+
+    def previewMode(self):
+        randoms = self.generateRandom()
+        for random in randoms:
+            self.previewWidget.addPixmap(random)
