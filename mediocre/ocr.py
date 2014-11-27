@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:47:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 12:18:07 2014 (+0100)
+# Last-Updated: Thu Nov 27 14:56:07 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 372
+#     Update #: 374
 #
 
 import hashlib
@@ -124,7 +124,8 @@ class OCR(object):
             errorResponses = np.array(errorResponses)
             self.__model.train(errorSamples,
                                errorResponses, True)
-        goodSamples = np.vstack(goodSamples)
+        if goodSamples:
+            goodSamples = np.vstack(goodSamples)
         goodResponses = np.array(goodResponses)
         return goodSamples, goodResponses
 
