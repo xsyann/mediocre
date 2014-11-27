@@ -10,7 +10,7 @@
 #
 
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QWidget, QMainWindow, QApplication)
+from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from mediocre.window_ui import WindowUI
 
@@ -20,32 +20,17 @@ class Window(QMainWindow, WindowUI):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
         self.setupUI()
-        self.populateUI()
         self.connectUI()
-        self.initUI()
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
             self.close()
 
-    def populateUI(self):
-        pass
-
     def connectUI(self):
         self.hsplitter.splitterMoved.connect(self.splitterMoved)
 
-    def initUI(self):
-        pass
-
-    ########################################################
-    # Utils
-
-    ########################################################
-    # Signals handlers
-
     def splitterMoved(self, pos, index):
-        """Avoid segfault when QTreeView has focus and
-        is going to be collapsed.
+        """Avoid segfault when QTreeView has focus and is going to be collapsed.
         """
         focusedWidget = QApplication.focusWidget()
         if focusedWidget:

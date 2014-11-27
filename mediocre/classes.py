@@ -9,8 +9,8 @@
 #     Update #: 30
 #
 
-import os
 import string
+
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 
 

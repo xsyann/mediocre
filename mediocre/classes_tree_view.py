@@ -9,11 +9,11 @@
 #     Update #: 82
 #
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QTreeView, QHBoxLayout, QGroupBox
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
+from PyQt5.QtWidgets import QTreeView
 
-from mediocre.classes import Classes, Class
+from mediocre.classes import Class, Classes
 
 
 class TreeItem(QStandardItem):

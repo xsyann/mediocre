@@ -9,16 +9,13 @@
 #     Update #: 1084
 #
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsLineItem,
-                             QGraphicsRectItem, QGraphicsItemGroup,
-                             QGraphicsScale)
-from PyQt5.QtCore import QLineF, QPointF, QRectF, QSizeF
-from PyQt5.QtGui import (QPen, QBrush, QCursor, QPainter, QPixmap, QFont,
-                         QColor, QTransform, QVector3D)
+from PyQt5.QtCore import QLineF, QPointF, QRectF, QSizeF, Qt
+from PyQt5.QtGui import QColor, QCursor, QFont, QPainter, QPen, QPixmap
+from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsScene, QGraphicsView
 
 
 class PaintArea(QGraphicsView):
+
     def __init__(self, width=10, parent=None):
         QGraphicsView.__init__(self, parent)
         self._frame = None
@@ -113,8 +110,6 @@ class PaintArea(QGraphicsView):
     def render(self, painter):
         if self._instructions:
             self.scene().removeItem(self._instructions)
-#        self.scene().render(painter,
-#                            source=self.canvas())
         self.scene().render(painter,
                             source=self.scene().itemsBoundingRect())
         if self._instructions:

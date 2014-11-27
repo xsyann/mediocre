@@ -10,11 +10,13 @@
 #
 
 import timeit
+from collections import Counter, defaultdict
+
 import numpy as np
-from collections import Counter
-from collections import defaultdict
+
 
 class Analyzer(object):
+
     def __init__(self, model, dataset, trainRatio):
         self.__model = model
         self.__dataset = dataset
@@ -37,9 +39,7 @@ class Analyzer(object):
     def __str__(self):
         res = "\tTrain samples\t\tTest samples"
         for cl, ((tTrain, nTrain, pTrain), (tTest, nTest, pTest)) in sorted(self.classifications.items()):
-            res += "\n  {0}:\t{1} / {2}\t({3} %)\t  -  {4} / {5}\t({6} %)".format(cl.repr,
-                                                                                  tTrain, nTrain, pTrain,
-                                                                                  tTest, nTest, pTest)
+            res += "\n  {0}:\t{1} / {2}\t({3} %)\t  -  {4} / {5}\t({6} %)".format(cl.repr, tTrain, nTrain, pTrain, tTest, nTest, pTest)
         cl, percent = self.maxTrain
         res += "\n\n  Best recognized in train set : %s (%d %%)\n" % (cl.repr, percent)
         cl, percent = self.minTrain
@@ -54,7 +54,6 @@ class Analyzer(object):
         res += "  Mean : %d\n" % self.trainMean
         res += "  Median : %d\n" % self.trainMedian
         res += "  Median absolute deviation : %.2f\n" % self.trainMAD
-        # res += "Variance : %2.f\n" % self.trainVar
         res += "  Standard deviation : %.2f\n" % self.trainStd
         res += "  Coefficient of variation : %.2f %%\n" % self.trainVarCoeff
 
@@ -85,20 +84,19 @@ class Analyzer(object):
         countTrain = Counter([self.__dataset.getResponse(i) for i in trainResponses])
         countTest = Counter([self.__dataset.getResponse(i) for i in testResponses])
 
-        # Create a dict { label1: (train, test), label2: ... }
+        # Create a dict {label1: (train, test), label2: ...}
         # where train = (wellPredicted, total, percentage)
-        # and test  = (wellPredicted, total, percentage)
+        # and test = (wellPredicted, total, percentage)
         trainPercents, testPercents = {}, {}
         self.classifications = {}
         for k in list(set(countTrain.keys()) | set(countTest.keys())):
             trainPercents[k] = int(truthTableTrain[k] / float(countTrain[k]) * 100) if countTrain[k] > 0 else 100
             testPercents[k] = int(truthTableTest[k] / float(countTest[k]) * 100) if countTest[k] > 0 else 100
             self.classifications[k] = ((truthTableTrain[k], countTrain[k], trainPercents[k]),
-                                  (truthTableTest[k], countTest[k], testPercents[k]))
+                                       (truthTableTest[k], countTest[k], testPercents[k]))
 
         self.minTrain, self.maxTrain = self.__mapDict(trainPercents, min), self.__mapDict(trainPercents, max)
         self.minTest, self.maxTest = self.__mapDict(testPercents, min), self.__mapDict(testPercents, max)
-
         self.__analyzeTrainingSamples([v for k, v in countTrain.iteritems()])
 
     def __analyzeTrainingSamples(self, trainingSamples):
@@ -118,6 +116,7 @@ class Analyzer(object):
         """
         predict = self.__model.predict(samples)
         trueTable = (predict == responses)
-        truePredict = Counter([self.__dataset.getResponse(c) for i, c in enumerate(predict) if trueTable[i]])
+        truePredict = Counter([self.__dataset.getResponse(c) for i, c
+                               in enumerate(predict) if trueTable[i]])
         rate = np.mean(predict == responses)
         return truePredict, rate

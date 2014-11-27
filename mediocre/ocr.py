@@ -9,19 +9,20 @@
 #     Update #: 372
 #
 
-import os
-import sys
 import hashlib
+import os
 import pickle
-import numpy as np
-from analyzer import Analyzer
 
+import numpy as np
+
+from analyzer import Analyzer
 from mediocre import models
 from mediocre.dataset import DatasetItem
 
 
 class ModelException(Exception):
     pass
+
 
 class OCR(object):
     MODEL_ANN = 0
@@ -100,7 +101,6 @@ class OCR(object):
             return (np.array([]), np.array([]))
         samples = []
         responses = []
-        nClass = len(self.classes)
         for item in items:
             responses.append(self.classes.index(item.cl))
             samples.append(item.sample)

@@ -10,16 +10,12 @@
 #
 
 import os
-import sys
 
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-                             QLabel, QToolBar, QSizePolicy, QFileDialog,
-                             QLineEdit, QScrollArea, QGroupBox, QSpinBox,
-                             QComboBox, QSpinBox, QSplitter, QTextEdit,
-                             QGridLayout, QApplication)
-from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal, QObject
-from PyQt5.QtGui import (QFont, QKeySequence, QIcon, QPixmap, QPainter,
-                         QTextCursor)
+from PyQt5.QtGui import QFont, QTextCursor
+from PyQt5.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
+                             QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+                             QPushButton, QSpinBox, QTextEdit, QVBoxLayout,
+                             QWidget)
 
 from mediocre.dataset import Dataset
 from mediocre.ocr import OCR
@@ -109,12 +105,6 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         folder = os.path.join(root, "dataset")
         self.datasetFolder.setText(folder)
-
-    ########################################################
-    # Utils
-
-    ########################################################
-    # Signals handlers
 
     def selectFolder(self):
         file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))

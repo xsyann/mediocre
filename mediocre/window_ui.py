@@ -10,12 +10,10 @@
 #
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget,
-                             QWidget, QSplitter)
+from PyQt5.QtWidgets import QHBoxLayout, QSplitter, QTabWidget, QWidget
 
 from mediocre.classes_tree_view import ClassesTreeView
-from mediocre.widgets import TrainingWidget, DatasetWidget, RecognitionWidget
+from mediocre.widgets import DatasetWidget, RecognitionWidget, TrainingWidget
 
 
 class WindowUI(object):

@@ -7,12 +7,10 @@
 #     Update #: 430
 #
 
-from PyQt5.QtCore import Qt, QSize, QRectF, QEvent, QRect, QPointF, pyqtSignal
-from PyQt5.QtGui import (QPixmap, QIcon, QPainter, QPen, QBrush, QKeySequence,
-                         QPainterPath)
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QToolButton, QMenu,
-                             QWidgetAction, QListWidget, QListWidgetItem,
-                             QLabel)
+from PyQt5.QtCore import pyqtSignal, QEvent, QRect, QRectF, QSize, Qt
+from PyQt5.QtGui import QIcon, QKeySequence, QPainter, QPixmap
+from PyQt5.QtWidgets import (QLabel, QListWidget, QListWidgetItem, QMenu,
+                             QToolButton, QWidgetAction)
 
 
 class BrushSizeWidget(QToolButton):
@@ -31,7 +29,6 @@ class BrushSizeWidget(QToolButton):
         self.connectUI()
 
     def initUI(self):
-        layout = QVBoxLayout(self)
         self.setPopupMode(QToolButton.MenuButtonPopup)
         self.menu = QMenu(self)
         self.setMenu(self.menu)

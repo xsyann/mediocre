@@ -10,14 +10,13 @@
 #
 
 import os
-import string
-import random
-import numpy as np
+
 import cv2
+import numpy as np
 from numpy.linalg import norm
 
-class StatModel(object):
 
+class StatModel(object):
     RESIZE = 16
 
     def __init__(self, nClass):
@@ -46,7 +45,7 @@ class StatModel(object):
         if not contours:
             return image
         x, y, w, h = self.__mergeContours(contours)
-        return image[y:y+h, x:x+w]
+        return image[y: y + h, x: x + w]
 
     def _ratioResize(self, image):
         """Resize image to get an aspect ratio of 1:1 (square).
@@ -55,8 +54,8 @@ class StatModel(object):
         ratioSize = max(h, w)
         blank = np.zeros((ratioSize, ratioSize), np.uint8)
         x = (ratioSize - w) / 2.0
-        y = (ratioSize - h ) / 2.0
-        blank[y:y+h, x:x+w] = image
+        y = (ratioSize - h) / 2.0
+        blank[y: y + h, x: x + w] = image
         return blank
 
     def _deskew(self, img):
@@ -64,7 +63,7 @@ class StatModel(object):
         m = cv2.moments(img)
         if abs(m['mu02']) < 1e-2:
             return img.copy()
-        skew = m['mu11']/ m['mu02']
+        skew = m['mu11'] / m['mu02']
         M = np.float32([[1, skew, -0.5 * self.RESIZE * skew], [0, 1, 0]])
         img = cv2.warpAffine(img, M, (self.RESIZE, self.RESIZE), flags=affine_flags)
         return img
@@ -73,25 +72,14 @@ class StatModel(object):
         gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
         gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
         mag, ang = cv2.cartToPolar(gx, gy)
-        bins = np.int32(self.BINS_NB*ang/(2*np.pi))
-        bin_cells = bins[:10,:10], bins[10:,:10], bins[:10,10:], bins[10:,10:]
-        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
-        hists = [np.bincount(b.ravel(), m.ravel(), self.BINS_NB) for b, m in zip(bin_cells, mag_cells)]
-        hist = np.hstack(hists)
-        return hist
-
-    def _hog1(self, img):
-        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
-        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
-        mag, ang = cv2.cartToPolar(gx, gy)
         bin_n = 16
-        bin = np.int32(bin_n*ang/(2*np.pi))
-        bin_cells = bin[:10,:10], bin[10:,:10], bin[:10,10:], bin[10:,10:]
-        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
-        hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
+        bin = np.int32(bin_n * ang / (2 * np.pi))
+        bin_cells = bin[:10, :10], bin[10:, :10], bin[:10, 10:], bin[10:, 10:]
+        mag_cells = mag[:10, :10], mag[10:, :10], mag[:10, 10:], mag[10:, 10:]
+        hists = [np.bincount(b.ravel(), m.ravel(), bin_n)
+                 for b, m in zip(bin_cells, mag_cells)]
         hist = np.hstack(hists)
 
-        # transform to Hellinger kernel
         eps = 1e-7
         hist /= hist.sum() + eps
         hist = np.sqrt(hist)
@@ -160,25 +148,21 @@ class ANN(StatModel):
         layers = np.int32([sampleSize, 16, self.classificationCount])
         self._model.create(layers, cv2.ANN_MLP_SIGMOID_SYM, 1, 1)
 
-        maxIter = 2000 # Maximum number of iterations
-        epsilon = 0.002 # Error threshold
-        # Stop if maxIter or epsilon is reached
+        maxIter = 2000
+        epsilon = 0.002
         condition = cv2.TERM_CRITERIA_COUNT | cv2.TERM_CRITERIA_EPS
         criteria = (condition, maxIter, epsilon)
 
         params = {
             'term_crit': criteria,
             'train_method': cv2.ANN_MLP_TRAIN_PARAMS_BACKPROP,
-            'bp_dw_scale': 0.1, # Stength of the weight gradient term
-            'bp_moment_scale': 0.1 # Strength of the momentum term
-            }
-
+            'bp_dw_scale': 0.1,
+            'bp_moment_scale': 0.1
+        }
         self._samples = samples
         self._responses = np.float32(responses)
-        self._model.train(inputs=samples,
-                  outputs=self._responses,
-                  sampleWeights=None,
-                  params=params)
+        self._model.train(inputs=samples, outputs=self._responses,
+                          sampleWeights=None, params=params)
 
     def predict(self, samples):
         retval, outputs = self._model.predict(samples)
@@ -195,7 +179,7 @@ class KNN(StatModel):
         self._model.train(samples, responses, updateBase=updateBase)
 
     def predict(self, samples):
-        retval, results, neighborResponses, dists = self._model.find_nearest(samples, k=6)
+        _, results, _, _ = self._model.find_nearest(samples, k=6)
         return results.ravel()
 
 
@@ -210,13 +194,13 @@ class SVM(StatModel):
     def preprocess(self, filename):
         self.input = cv2.imread(filename, 0)
         self.input = cv2.adaptiveThreshold(src=self.input, maxValue=255,
-                                       adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                       thresholdType=cv2.THRESH_BINARY_INV,
-                                       blockSize=11, C=2)
+                                           adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                           thresholdType=cv2.THRESH_BINARY_INV,
+                                           blockSize=11, C=2)
         self.input = self._ratioResize(self._cropToFit(self.input))
         self.input = cv2.resize(self.input, (self.RESIZE, self.RESIZE))
         self.input = self._deskew(self.input)
-        self.input = self._hog1(self.input)
+        self.input = self._hog(self.input)
         return np.float32(self.input)
 
     def train(self, samples, responses, updateBase=False):
@@ -228,9 +212,8 @@ class SVM(StatModel):
                 return self._model
         if updateBase:
             return self._model
-        svm_params = dict( kernel_type = cv2.SVM_RBF,
-                           svm_type = cv2.SVM_C_SVC,
-                           C=2.67, gamma=5.383 )
+        svm_params = dict(kernel_type=cv2.SVM_RBF, svm_type=cv2.SVM_C_SVC,
+                          C=2.67, gamma=5.383)
         self._samples = samples
         self._responses = responses
         return self._model.train(samples, responses, params=svm_params)

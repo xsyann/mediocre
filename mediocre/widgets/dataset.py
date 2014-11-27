@@ -11,12 +11,12 @@
 
 import os
 
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-                             QLabel, QToolBar, QSizePolicy, QAction, QLineEdit,
-                             QScrollArea, QGroupBox, QSpinBox, QFileDialog,
-                             QSpinBox, QSplitter, QGridLayout)
-from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal
-from PyQt5.QtGui import QFont, QKeySequence, QIcon, QPixmap, QPainter
+from PyQt5.QtCore import QEvent, QSize, Qt
+from PyQt5.QtGui import QIcon, QKeySequence, QPainter, QPixmap
+from PyQt5.QtWidgets import (QAction, QFileDialog, QGridLayout, QGroupBox,
+                             QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                             QScrollArea, QSizePolicy, QSpinBox, QSplitter,
+                             QToolBar, QVBoxLayout, QWidget)
 
 from mediocre.dataset import Dataset, RandomParam
 from mediocre.paint_area import PaintArea
@@ -233,9 +233,6 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
             self.save()
         return super(DatasetWidget, self).eventFilter(watched, event)
 
-    ########################################################
-    # Utils
-
     def displayInstructions(self):
         if not self._classes:
             self.paintArea.setInstructions("")
@@ -270,9 +267,6 @@ class DatasetWidget(QWidget, DatasetWidgetUI):
         self._last.append(pixmap)
         self._last.extend(randoms)
         return [pixmap] + randoms
-
-    ########################################################
-    # Signals handlers
 
     def reloadClasses(self):
         self.clear()

@@ -10,12 +10,13 @@
 #
 
 import sys
+
 from PyQt5.QtWidgets import QApplication, QStyleFactory
-from PyQt5.QtGui import QPalette, QColor
 
 from mediocre.window import Window
 
 APP_NAME = 'Mediocre'
+
 
 def main():
     app = QApplication(sys.argv)
@@ -28,6 +29,7 @@ def main():
         sys.exit(app.exec_())
     except KeyboardInterrupt:
         pass
+
 
 if __name__ == '__main__':
     main()

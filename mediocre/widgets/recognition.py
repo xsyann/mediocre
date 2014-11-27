@@ -12,13 +12,13 @@
 import os
 from collections import OrderedDict
 
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QComboBox,
-                             QLabel, QHBoxLayout, QLineEdit, QMessageBox)
-from PyQt5.QtGui import QPixmap, QPainter, QFont, QKeySequence
+from PyQt5.QtCore import QEvent, Qt
+from PyQt5.QtGui import QFont, QKeySequence, QPainter, QPixmap
+from PyQt5.QtWidgets import (QFileDialog, QHBoxLayout, QLabel, QLineEdit,
+                             QPushButton, QVBoxLayout, QWidget)
 
+from mediocre.ocr import ModelException, OCR
 from mediocre.paint_area import PaintArea
-from mediocre.ocr import OCR, ModelException
 
 
 class RecognitionWidgetUI(object):
@@ -64,7 +64,6 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         super(RecognitionWidget, self).__init__(parent)
         self._classes_tree = classes_tree
         self.setupUI()
-        self.populateUI()
         self.connectUI()
         self.initUI()
         self.ocr = OCR()
@@ -73,9 +72,6 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
     def connectUI(self):
         self.runButton.clicked.connect(self.run)
         self.selectFolderButton.clicked.connect(self.selectFolder)
-
-    def populateUI(self):
-        pass
 
     def initUI(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -105,7 +101,6 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
             self.MODE_KNN: OCR.MODEL_KNN,
             self.MODE_SVM: OCR.MODEL_SVM
         }
-
         pixmap = QPixmap(50, 50)
         pixmap.fill(Qt.white)
         painter = QPainter(pixmap)

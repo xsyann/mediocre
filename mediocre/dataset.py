@@ -11,13 +11,12 @@
 
 import os
 import random
-import cv2
-import numpy as np
 
-from PyQt5.QtWidgets import (QGraphicsScene, QGraphicsLineItem,
-                             QGraphicsItemGroup, QGraphicsRotation)
+import numpy as np
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPixmap, QVector3D, QImage
+from PyQt5.QtGui import QPainter, QPixmap, QVector3D
+from PyQt5.QtWidgets import (QGraphicsLineItem, QGraphicsRotation,
+                             QGraphicsScene)
 
 
 class RandomParam():
@@ -59,7 +58,6 @@ class Dataset(object):
         dirs = os.path.join(self._folder, folder)
         if not os.path.exists(dirs):
             os.makedirs(dirs)
-        filename = prefix + folder
         path = self.generateFilename(dirs, prefix, format)
         if pixmap.save(path, format):
             self._last.append(path)
@@ -184,7 +182,6 @@ class Dataset(object):
             return (np.array([]), np.array([]))
         samples = []
         responses = []
-        nClass = len(self.classes)
         for item in items:
             responses.append(self.classes.index(item.cl))
             samples.append(item.sample)
