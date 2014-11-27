@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 23:31:05 2014 (+0100)
-# Last-Updated: Thu Nov 27 10:24:26 2014 (+0100)
+# Last-Updated: Thu Nov 27 12:26:22 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 204
+#     Update #: 264
 #
 
 import os
@@ -46,7 +46,6 @@ class StatModel(object):
         if not contours:
             return image
         x, y, w, h = self.__mergeContours(contours)
-#        cv2.rectangle(self.input, (x, y), (x + w, y + h), (0, 0, 255), 1)
         return image[y:y+h, x:x+w]
 
     def _ratioResize(self, image):
@@ -103,13 +102,21 @@ class ANN(StatModel):
     def __init__(self, nClass):
         super(ANN, self).__init__(nClass)
         self._model = cv2.ANN_MLP()
+        self._samples = np.array([])
+        self._responses = np.array([])
 
     def train(self, samples, responses, updateBase=False):
         if updateBase:
-            return self._model
-        sampleCount, sampleSize = samples.shape
-        newResponses = self.unrollResponses(responses).reshape(-1, self.classificationCount)
+            if self._samples.any():
+                samples = np.vstack([samples, self._samples])
+                responses = self.unrollResponses(responses).reshape(-1, self.classificationCount)
+                responses = np.vstack([responses, self._responses])
+            else:
+                return self._model
+        else:
+            responses = self.unrollResponses(responses).reshape(-1, self.classificationCount)
 
+        sampleCount, sampleSize = samples.shape
         layers = np.int32([sampleSize, 16, self.classificationCount])
         self._model.create(layers, cv2.ANN_MLP_SIGMOID_SYM, 1, 1)
 
@@ -126,8 +133,10 @@ class ANN(StatModel):
             'bp_moment_scale': 0.1 # Strength of the momentum term
             }
 
+        self._samples = samples
+        self._responses = np.float32(responses)
         self._model.train(inputs=samples,
-                  outputs=np.float32(newResponses),
+                  outputs=self._responses,
                   sampleWeights=None,
                   params=params)
 
@@ -199,22 +208,30 @@ class SVM(StatModel):
 
     def preprocess(self, filename):
         self.input = cv2.imread(filename, 0)
-        thresh = cv2.adaptiveThreshold(src=self.input, maxValue=255,
+        self.input = cv2.adaptiveThreshold(src=self.input, maxValue=255,
                                        adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                        thresholdType=cv2.THRESH_BINARY_INV,
                                        blockSize=11, C=2)
-        squared = self._ratioResize(self._cropToFit(thresh))
-        self.input = cv2.resize(squared, (self.RESIZE, self.RESIZE))
-        # deskewed = self._deskew(self.input)
-        hogdata = self._hog1(self.input)
-        return np.float32(hogdata)
+        self.input = self._ratioResize(self._cropToFit(self.input))
+        self.input = cv2.resize(self.input, (self.RESIZE, self.RESIZE))
+        self.input = self._deskew(self.input)
+        self.input = self._hog1(self.input)
+        return np.float32(self.input)
 
     def train(self, samples, responses, updateBase=False):
+        if updateBase:
+            if self._samples.any():
+                samples = np.vstack([samples, self._samples])
+                responses = np.append(responses, self._responses)
+            else:
+                return self._model
         if updateBase:
             return self._model
         svm_params = dict( kernel_type = cv2.SVM_RBF,
                            svm_type = cv2.SVM_C_SVC,
                            C=2.67, gamma=5.383 )
+        self._samples = samples
+        self._responses = responses
         return self._model.train(samples, responses, params=svm_params)
 
     def predict(self, samples):

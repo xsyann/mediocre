@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Thu Nov 27 03:53:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 09:44:27 2014 (+0100)
+# Last-Updated: Thu Nov 27 12:19:25 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 90
+#     Update #: 110
 #
 
 import os
@@ -14,11 +14,11 @@ from collections import OrderedDict
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QComboBox,
-                             QLabel, QHBoxLayout, QLineEdit)
+                             QLabel, QHBoxLayout, QLineEdit, QMessageBox)
 from PyQt5.QtGui import QPixmap, QPainter, QFont
 
 from mediocre.paint_area import PaintArea
-from mediocre.ocr import OCR
+from mediocre.ocr import OCR, ModelException
 
 
 class RecognitionWidgetUI(object):
@@ -101,8 +101,12 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         painter.end()
 
         for mode, label in self.results.items():
-            result = self.run_mode(modes[mode], pixmap)
-            label.setText(mode + ": " + result)
+            try:
+                result = self.run_mode(modes[mode], pixmap)
+            except:
+                label.setText(mode + ": need training")
+            else:
+                label.setText(mode + ": " + result)
         self.paintArea.clear()
 
     def selectFolder(self):

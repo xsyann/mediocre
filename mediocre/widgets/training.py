@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:06:45 2014 (+0100)
-# Last-Updated: Thu Nov 27 05:23:40 2014 (+0100)
+# Last-Updated: Thu Nov 27 11:36:56 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 132
+#     Update #: 140
 #
 
 import os
@@ -46,12 +46,15 @@ class TrainingWidgetUI(object):
         self.trainRatio = QSpinBox()
         self.maxPerClass = QSpinBox()
         self.mode = QComboBox()
+        self.errorsIteration = QSpinBox()
         layout.addWidget(QLabel(self.tr("Train ratio")), 0, 0)
         layout.addWidget(self.trainRatio, 0, 1)
         layout.addWidget(QLabel(self.tr("Maximum per class")), 1, 0)
         layout.addWidget(self.maxPerClass, 1, 1)
-        layout.addWidget(QLabel(self.tr("Mode")), 2, 0)
-        layout.addWidget(self.mode, 2, 1)
+        layout.addWidget(QLabel(self.tr("Mode")), 3, 0)
+        layout.addWidget(self.mode, 3, 1)
+        layout.addWidget(QLabel(self.tr("Errors iteration")), 2, 0)
+        layout.addWidget(self.errorsIteration, 2, 1)
         groupBox.setLayout(layout)
         return groupBox
 
@@ -100,6 +103,7 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         self.trainRatio.setSuffix(' %')
         self.trainRatio.setRange(0, 100)
         self.maxPerClass.setRange(1, 50000)
+        self.errorsIteration.setRange(0, 500)
         self.maxPerClass.setValue(400)
         self.trainRatio.setValue(50)
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -136,7 +140,8 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         ocr = OCR()
         ocr.trainModel(self._dataset, classes, mode,
                        self.trainRatio.value() / 100.0,
-                       self.maxPerClass.value(), self.log)
+                       self.maxPerClass.value(), self.errorsIteration.value(),
+                       self.log)
         ocr.saveModel()
 
 

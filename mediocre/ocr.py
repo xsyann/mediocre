@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:47:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 11:09:01 2014 (+0100)
+# Last-Updated: Thu Nov 27 12:18:07 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 326
+#     Update #: 372
 #
 
 import os
@@ -19,6 +19,9 @@ from analyzer import Analyzer
 from mediocre import models
 from mediocre.dataset import DatasetItem
 
+
+class ModelException(Exception):
+    pass
 
 class OCR(object):
     MODEL_ANN = 0
@@ -61,10 +64,10 @@ class OCR(object):
                 self.__model.train(samples, responses)
         else:
             self.__model = None
-            print "No model found"
+            raise ModelException()
 
     def trainModel(self, dataset, classes, type=MODEL_ANN, trainRatio=.5,
-                   maxPerClass=100, log=None):
+                   maxPerClass=100, errorsIteration=0, log=None):
         self.__dataset = dataset
         self.__classes = classes
         self.__type = type
@@ -73,7 +76,7 @@ class OCR(object):
         self.__model = self.__initModel(type)
         self.__dataset.preprocess(classes, maxPerClass, trainRatio,
                                   self.__model.preprocess)
-        self.__trainModel(trainRatio=trainRatio, log=log)
+        self.__trainModel(trainRatio=trainRatio, errorsIteration=errorsIteration, log=log)
 
     def charFromImage(self, image):
         item = DatasetItem(self.__model.preprocess)
@@ -111,23 +114,21 @@ class OCR(object):
             if error:
                 errorSamples.append(samples[i])
                 errorResponses.append(responses[i])
-                self.__dataset.trainSamples = np.vstack([self.__dataset.trainSamples, samples[i]])
-                self.__dataset.trainResponses = np.append(self.__dataset.trainResponses, responses[i])
             else:
                 goodSamples.append(samples[i])
                 goodResponses.append(responses[i])
         if errorSamples:
+            self.__dataset.trainSamples = np.vstack([self.__dataset.trainSamples, errorSamples])
+            self.__dataset.trainResponses = np.append(self.__dataset.trainResponses, errorResponses)
             errorSamples = np.vstack(errorSamples)
             errorResponses = np.array(errorResponses)
-            goodSamples = np.vstack(goodSamples)
-            goodResponses = np.array(goodResponses)
             self.__model.train(errorSamples,
                                errorResponses, True)
-        else:
-            goodSamples, goodResponses = np.array([]), np.array([])
+        goodSamples = np.vstack(goodSamples)
+        goodResponses = np.array(goodResponses)
         return goodSamples, goodResponses
 
-    def __trainModel(self, trainRatio=.5, log=None):
+    def __trainModel(self, trainRatio=.5, errorsIteration=0, log=None):
         if log:
             analyzer = Analyzer(self.__model, self.__dataset, trainRatio)
             analyzer.start()
@@ -135,12 +136,11 @@ class OCR(object):
                            self.__dataset.trainResponses)
         samples, responses = self.__dataset.testSamples, self.__dataset.testResponses
         i = 0
-        while responses.any() and i < 6:
+        while responses.any() and i < errorsIteration:
             samples, responses = self.__injectErrors(samples, responses)
             i += 1
         self.__dataset.testSamples = samples
         self.__dataset.testResponses = responses
-        print responses
         if log:
             analyzer.stop()
             analyzer.analyze()
