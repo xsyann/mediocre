@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Mon Nov 10 14:30:25 2014 (+0100)
-# Last-Updated: Thu Nov 27 00:24:50 2014 (+0100)
+# Last-Updated: Thu Nov 27 01:55:39 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 226
+#     Update #: 254
 #
 
 import os
@@ -52,7 +52,7 @@ class Dataset(object):
         return testSampleCount
 
     def getResponse(self, index):
-        return self.classes[index]
+        return self.classes[int(index)]
 
     def addDatum(self, prefix, cl, pixmap, format):
         folder = cl.folder
@@ -140,7 +140,7 @@ class Dataset(object):
 
     def preprocess(self, classes, maxPerClass, trainRatio):
         self.maxPerClass = maxPerClass
-        self.trainRatio = trainRatio / 100.0
+        self.trainRatio = trainRatio
         self.classes = classes
         self.__stackArrays(self.__getItems(self.trainRatio))
 

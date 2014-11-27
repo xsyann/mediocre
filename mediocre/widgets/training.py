@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:06:45 2014 (+0100)
-# Last-Updated: Thu Nov 27 00:07:46 2014 (+0100)
+# Last-Updated: Thu Nov 27 02:00:37 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 98
+#     Update #: 118
 #
 
 import os
@@ -92,6 +92,7 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         self.connectUI()
         self.initUI()
         self._dataset = Dataset(self.datasetFolder.text())
+        self.datasetFolder.textChanged.connect(self._dataset.setFolder)
         sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
 
     def __del__(self):
@@ -109,7 +110,7 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         self.trainRatio.setSuffix(' %')
         self.trainRatio.setRange(0, 100)
         self.maxPerClass.setRange(1, 50000)
-        self.maxPerClass.setValue(700)
+        self.maxPerClass.setValue(400)
         self.trainRatio.setValue(50)
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         folder = os.path.join(root, "dataset")
@@ -144,7 +145,8 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         mode = modes[self.__modes[self.mode.currentIndex()]]
         classes = self._classes_tree.getClasses()
         ocr = OCR()
-        ocr.trainModel(self._dataset, classes, mode, self.trainRatio.value(),
+        ocr.trainModel(self._dataset, classes, mode,
+                       self.trainRatio.value() / 100.0,
                        self.maxPerClass.value())
         ocr.saveModel()
 
