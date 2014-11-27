@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Thu Nov 27 03:53:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 12:54:48 2014 (+0100)
+# Last-Updated: Thu Nov 27 12:48:32 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 138
+#     Update #: 122
 #
 
 import os
@@ -94,10 +94,9 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         classes = self._classes_tree.getClasses()
         self.ocr.loadModel(classes, folder, mode)
         chr = self.ocr.charFromImage(pixmap)
-        for cl in classes:
-            if cl.value == chr:
-                return cl.repr
+        print classes.classFor(chr)
         return chr
+#        return classes.classFor(self.ocr.charFromImage(pixmap)).repr
 
     def run(self):
         modes = {
@@ -116,7 +115,7 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         for mode, label in self.results.items():
             try:
                 result = self.run_mode(modes[mode], pixmap)
-            except ModelException:
+            except:
                 label.setText(mode + ": need training")
             else:
                 label.setText(mode + ": " + result)
