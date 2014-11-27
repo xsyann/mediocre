@@ -4,18 +4,18 @@
 #
 # Author: Yann KOETH
 # Created: Thu Nov 27 03:53:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 12:19:25 2014 (+0100)
+# Last-Updated: Thu Nov 27 12:33:46 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 110
+#     Update #: 116
 #
 
 import os
 from collections import OrderedDict
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QComboBox,
                              QLabel, QHBoxLayout, QLineEdit, QMessageBox)
-from PyQt5.QtGui import QPixmap, QPainter, QFont
+from PyQt5.QtGui import QPixmap, QPainter, QFont, QKeySequence
 
 from mediocre.paint_area import PaintArea
 from mediocre.ocr import OCR, ModelException
@@ -68,6 +68,7 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         self.connectUI()
         self.initUI()
         self.ocr = OCR()
+        self.paintArea.installEventFilter(self)
 
     def connectUI(self):
         self.runButton.clicked.connect(self.run)
@@ -80,6 +81,13 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         folder = os.path.join(root, "models")
         self.modelsFolder.setText(folder)
+
+    def eventFilter(self, watched, event):
+        if (event.type() == QEvent.KeyPress and
+            (event.matches(QKeySequence.InsertParagraphSeparator) or
+             event.key() == Qt.Key_Space)):
+            self.run()
+        return super(RecognitionWidget, self).eventFilter(watched, event)
 
     def run_mode(self, mode, pixmap):
         folder = self.modelsFolder.text()

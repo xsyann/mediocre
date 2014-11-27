@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 23:31:05 2014 (+0100)
-# Last-Updated: Thu Nov 27 12:26:22 2014 (+0100)
+# Last-Updated: Thu Nov 27 12:30:40 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 264
+#     Update #: 274
 #
 
 import os
@@ -59,6 +59,45 @@ class StatModel(object):
         blank[y:y+h, x:x+w] = image
         return blank
 
+    def _deskew(self, img):
+        affine_flags = cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR
+        m = cv2.moments(img)
+        if abs(m['mu02']) < 1e-2:
+            return img.copy()
+        skew = m['mu11']/ m['mu02']
+        M = np.float32([[1, skew, -0.5 * self.RESIZE * skew], [0, 1, 0]])
+        img = cv2.warpAffine(img, M, (self.RESIZE, self.RESIZE), flags=affine_flags)
+        return img
+
+    def _hog(self, img):
+        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
+        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
+        mag, ang = cv2.cartToPolar(gx, gy)
+        bins = np.int32(self.BINS_NB*ang/(2*np.pi))
+        bin_cells = bins[:10,:10], bins[10:,:10], bins[:10,10:], bins[10:,10:]
+        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
+        hists = [np.bincount(b.ravel(), m.ravel(), self.BINS_NB) for b, m in zip(bin_cells, mag_cells)]
+        hist = np.hstack(hists)
+        return hist
+
+    def _hog1(self, img):
+        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
+        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
+        mag, ang = cv2.cartToPolar(gx, gy)
+        bin_n = 16
+        bin = np.int32(bin_n*ang/(2*np.pi))
+        bin_cells = bin[:10,:10], bin[10:,:10], bin[:10,10:], bin[10:,10:]
+        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
+        hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
+        hist = np.hstack(hists)
+
+        # transform to Hellinger kernel
+        eps = 1e-7
+        hist /= hist.sum() + eps
+        hist = np.sqrt(hist)
+        hist /= norm(hist) + eps
+        return hist
+
     def preprocess(self, filename):
         """Pre-process image :
         - Convert To Grayscale
@@ -76,7 +115,8 @@ class StatModel(object):
                                        blockSize=11, C=2)
         cropped = self._cropToFit(thresh)
         squared = self._ratioResize(cropped)
-        return cv2.resize(squared, (self.RESIZE, self.RESIZE))
+        resized = cv2.resize(squared, (self.RESIZE, self.RESIZE))
+        return resized
 
     def load(self, filename):
         if not os.path.isfile(filename):
@@ -166,45 +206,6 @@ class SVM(StatModel):
     def __init__(self, nClass):
         super(SVM, self).__init__(nClass)
         self._model = cv2.SVM()
-
-    def _deskew(self, img):
-        affine_flags = cv2.WARP_INVERSE_MAP|cv2.INTER_LINEAR
-        m = cv2.moments(img)
-        if abs(m['mu02']) < 1e-2:
-            return img.copy()
-        skew = m['mu11']/m['mu02']
-        M = np.float32([[1, skew, -0.5*self.RESIZE*skew], [0, 1, 0]])
-        img = cv2.warpAffine(img,M,(self.RESIZE, self.RESIZE),flags=affine_flags)
-        return img
-
-    def _hog(self, img):
-        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
-        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
-        mag, ang = cv2.cartToPolar(gx, gy)
-        bins = np.int32(self.BINS_NB*ang/(2*np.pi))
-        bin_cells = bins[:10,:10], bins[10:,:10], bins[:10,10:], bins[10:,10:]
-        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
-        hists = [np.bincount(b.ravel(), m.ravel(), self.BINS_NB) for b, m in zip(bin_cells, mag_cells)]
-        hist = np.hstack(hists)
-        return hist
-
-    def _hog1(self, img):
-        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
-        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
-        mag, ang = cv2.cartToPolar(gx, gy)
-        bin_n = 16
-        bin = np.int32(bin_n*ang/(2*np.pi))
-        bin_cells = bin[:10,:10], bin[10:,:10], bin[:10,10:], bin[10:,10:]
-        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
-        hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
-        hist = np.hstack(hists)
-
-        # transform to Hellinger kernel
-        eps = 1e-7
-        hist /= hist.sum() + eps
-        hist = np.sqrt(hist)
-        hist /= norm(hist) + eps
-        return hist
 
     def preprocess(self, filename):
         self.input = cv2.imread(filename, 0)
