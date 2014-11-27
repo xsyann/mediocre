@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 23:31:05 2014 (+0100)
-# Last-Updated: Thu Nov 27 12:30:40 2014 (+0100)
+# Last-Updated: Thu Nov 27 15:35:42 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 274
+#     Update #: 306
 #
 
 import os
@@ -100,7 +100,7 @@ class StatModel(object):
         thresh = cv2.adaptiveThreshold(src=blur, maxValue=255,
                                        adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                        thresholdType=cv2.THRESH_BINARY_INV,
-                                       blockSize=11, C=2)
+                                       blockSize=31, C=2)
         cropped = self._cropToFit(thresh)
         squared = self._ratioResize(cropped)
         resized = cv2.resize(squared, (self.RESIZE, self.RESIZE))
