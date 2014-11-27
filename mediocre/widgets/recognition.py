@@ -55,9 +55,10 @@ class RecognitionWidgetUI(object):
 
 
 class RecognitionWidget(QWidget, RecognitionWidgetUI):
-    MODE_ANN = "Neural Network"
-    MODE_KNEAREST = "K-Nearest"
-    __modes = [MODE_ANN, MODE_KNEAREST]
+    MODE_ANN = "Artifical Neural Networks"
+    MODE_KNN = "K-Nearest Neighbors"
+    MODE_SVM = "Support Vector Machines"
+    __modes = [MODE_ANN, MODE_KNN, MODE_SVM]
 
     def __init__(self, classes_tree, parent=None):
         super(RecognitionWidget, self).__init__(parent)
@@ -84,7 +85,8 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
     def run(self):
         modes = {
             self.MODE_ANN: OCR.MODEL_ANN,
-            self.MODE_KNEAREST: OCR.MODEL_KNEAREST
+            self.MODE_KNN: OCR.MODEL_KNN,
+            self.MODE_SVM: OCR.MODEL_SVM
         }
         mode = modes[self.__modes[self.mode.currentIndex()]]
         folder = self.modelsFolder.text()

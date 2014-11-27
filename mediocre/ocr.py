@@ -20,7 +20,8 @@ from mediocre.dataset import DatasetItem
 
 class OCR(object):
     MODEL_ANN = 0
-    MODEL_KNEAREST = 1
+    MODEL_KNN = 1
+    MODEL_SVM = 2
 
     def getModelFilename(self, classes, type):
         values = [cl.value for cl in classes]
@@ -46,7 +47,6 @@ class OCR(object):
         else:
             self.__model = None
             print "No model found"
-
 
     def trainModel(self, dataset, classes, type=MODEL_ANN, trainRatio=.5,
                    maxPerClass=100, log=None):
@@ -90,7 +90,8 @@ class OCR(object):
         """
         mods = {
             self.MODEL_ANN: models.ANN,
-            self.MODEL_KNEAREST: models.KNearest
-            }
+            self.MODEL_KNN: models.KNN,
+            self.MODEL_SVM: models.SVM
+        }
         Model = mods[type]
         return Model(len(self.__classes))

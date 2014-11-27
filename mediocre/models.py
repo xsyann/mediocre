@@ -15,6 +15,7 @@ import random
 import numpy as np
 import cv2
 
+
 class AbstractStatModel(object):
 
     def __init__(self, nClass):
@@ -38,7 +39,9 @@ class AbstractStatModel(object):
         newResponses[responsesIndexes] = 1
         return newResponses
 
+
 class ANN(AbstractStatModel):
+
     def __init__(self, nClass):
         super(ANN, self).__init__(nClass)
         self._model = cv2.ANN_MLP()
@@ -72,9 +75,11 @@ class ANN(AbstractStatModel):
         retval, outputs = self._model.predict(samples)
         return outputs.argmax(-1)
 
-class KNearest(AbstractStatModel):
+
+class KNN(AbstractStatModel):
+
     def __init__(self, nClass):
-        super(KNearest, self).__init__(nClass)
+        super(KNN, self).__init__(nClass)
         self._model = cv2.KNearest()
 
     def train(self, samples, responses):
@@ -83,3 +88,48 @@ class KNearest(AbstractStatModel):
     def predict(self, samples):
         retval, results, neighborResponses, dists = self._model.find_nearest(samples, k=10)
         return results.ravel()
+
+
+class SVM(AbstractStatModel):
+    BINS_NB = 4
+
+    def __init__(self, nClass):
+        super(SVM, self).__init__(nClass)
+        self._model = cv2.SVM()
+
+    def _deskew(self, img):
+        m = cv2.moments(img)
+        if abs(m['mu02']) < 1e-2:
+            return img.copy()
+        skew = m['mu11']/m['mu02']
+        M = np.float32([[1, skew, -0.5*SZ*skew], [0, 1, 0]])
+        img = cv2.warpAffine(img,M,(SZ, SZ),flags=affine_flags)
+        return img
+
+    def _hog(self, img):
+        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
+        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
+        mag, ang = cv2.cartToPolar(gx, gy)
+        bins = np.int32(bin_n*ang/(2*np.pi))
+        bin_cells = bins[:10,:10], bins[10:,:10], bins[:10,10:], bins[10:,10:]
+        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
+        hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
+        hist = np.hstack(hists)
+        return hist
+
+    def _before(self, samples):
+        deskewed = [map(self._deskew, row) for row in samples]
+        hogdata = [map(self._hog, row) for row in deskewed]
+        samples = np.float32(hogdata).reshape(-1,64)
+        responses = np.float32(np.repeat(np.arange(10), 250)[:, np.newaxis])
+        return samples, responses
+
+    def train(self, samples, responses):
+        # samples, responses = self._before(samples)
+        return self._model.train(samples, responses)
+
+    def predict(self, samples, responses=None):
+        # samples, responses = self._before(samples)
+        responses = responses or np.array([])
+        self._model.predict_all(samples, responses)
+        return responses
