@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:47:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 07:57:01 2014 (+0100)
+# Last-Updated: Thu Nov 27 11:09:01 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 208
+#     Update #: 326
 #
 
 import os
@@ -41,9 +41,7 @@ class OCR(object):
         else:
             arr = (self.__dataset.trainSamples,
                    self.__dataset.trainResponses)
-            print arr
             file = open(os.path.join(folder, filename), 'wb')
-            print os.path.join(folder, filename)
             pickle.dump(arr, file)
             file.close()
 
@@ -58,8 +56,6 @@ class OCR(object):
             else:
                 file = open(path, 'rb')
                 samples, responses = pickle.load(file)
-                samples = np.array(samples.tolist())
-                responses = np.array(responses.tolist())
                 file.close()
                 self.__model.train(samples, responses)
         else:
@@ -93,12 +89,57 @@ class OCR(object):
         response = self.__classes[int(self.__model.predict(sample)[0])]
         return response
 
+    def __stackArrays(self, items):
+        """Create samples and responses arrays.
+        """
+        if not items:
+            return (np.array([]), np.array([]))
+        samples = []
+        responses = []
+        nClass = len(self.classes)
+        for item in items:
+            responses.append(self.classes.index(item.cl))
+            samples.append(item.sample)
+        return (np.vstack(samples), np.array(responses))
+
+    def __injectErrors(self, samples, responses):
+        predict = self.__model.predict(samples)
+        errorSamples, errorResponses = [], []
+        goodSamples, goodResponses = [], []
+        for i, error in enumerate(predict != responses):
+            if error:
+                errorSamples.append(samples[i])
+                errorResponses.append(responses[i])
+                self.__dataset.trainSamples = np.vstack([self.__dataset.trainSamples, samples[i]])
+                self.__dataset.trainResponses = np.append(self.__dataset.trainResponses, responses[i])
+            else:
+                goodSamples.append(samples[i])
+                goodResponses.append(responses[i])
+        if errorSamples:
+            errorSamples = np.vstack(errorSamples)
+            errorResponses = np.array(errorResponses)
+            goodSamples = np.vstack(goodSamples)
+            goodResponses = np.array(goodResponses)
+            self.__model.train(errorSamples,
+                               errorResponses, True)
+        else:
+            goodSamples, goodResponses = np.array([]), np.array([])
+        return goodSamples, goodResponses
+
     def __trainModel(self, trainRatio=.5, log=None):
         if log:
             analyzer = Analyzer(self.__model, self.__dataset, trainRatio)
             analyzer.start()
         self.__model.train(self.__dataset.trainSamples,
                            self.__dataset.trainResponses)
+        samples, responses = self.__dataset.testSamples, self.__dataset.testResponses
+        i = 0
+        while responses.any() and i < 6:
+            samples, responses = self.__injectErrors(samples, responses)
+            i += 1
+        self.__dataset.testSamples = samples
+        self.__dataset.testResponses = responses
+        print responses
         if log:
             analyzer.stop()
             analyzer.analyze()

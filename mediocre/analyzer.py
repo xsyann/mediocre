@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 23:33:55 2014 (+0100)
-# Last-Updated: Thu Nov 27 01:45:00 2014 (+0100)
+# Last-Updated: Thu Nov 27 10:41:16 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 34
+#     Update #: 40
 #
 
 import timeit
@@ -80,7 +80,7 @@ class Analyzer(object):
 
         if 0 < self.__trainRatio:
             truthTableTrain, self.trainRate = self.__analyzePredict(trainSamples, trainResponses)
-        if 0 < self.__trainRatio < 1:
+        if 0 < self.__trainRatio < 1 and testSamples.any():
             truthTableTest, self.testRate = self.__analyzePredict(testSamples, testResponses)
         countTrain = Counter([self.__dataset.getResponse(i) for i in trainResponses])
         countTest = Counter([self.__dataset.getResponse(i) for i in testResponses])

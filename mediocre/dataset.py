@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Mon Nov 10 14:30:25 2014 (+0100)
-# Last-Updated: Thu Nov 27 08:11:07 2014 (+0100)
+# Last-Updated: Thu Nov 27 09:06:14 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 310
+#     Update #: 324
 #
 
 import os
@@ -211,84 +211,14 @@ class DatasetItem(object):
     def loadFromFile(self, filename):
         if not os.path.isfile(filename):
             raise OSError(2, 'File not found', filename)
-#        input = self.__load(filename)
         self.preprocessed = self.preprocess(filename)
 
-    def qtToCv(self, image):
-        image = image.convertToFormat(QImage.Format_RGB32)
-
-        width = image.width()
-        height = image.height()
-
-        ptr = image.constBits()
-        ptr.setsize(image.byteCount())
-        arr = np.array(ptr).reshape(height, width, 4)
-        return arr
-
     def loadFromImage(self, img):
-        input = self.qtToCv(QImage(img))
-        self.preprocessed = self.preprocess(input)
+        img.save("/tmp/buffer.bmp", "BMP")
+        self.loadFromFile("/tmp/buffer.bmp")
+        os.remove("/tmp/buffer.bmp")
 
     @property
     def sample(self):
         sample = np.array(self.preprocessed)
         return sample.ravel().astype(np.float32)
-
-#    def __load(self, filename):
-#        return cv2.imread(filename, cv2.CV_LOAD_IMAGE_COLOR)
-#        return cv2.imread(filename, 0)
-
-#    def __mergeContours(self, contours):
-#        """Merge all bounding boxes.
-#        Returns x, y, w, h.
-#        """
-#        x, y, x1, y1 = [], [], [], []
-#        for cnt in contours:
-#            pX, pY, pW, pH = cv2.boundingRect(cnt)
-#            x.append(pX)
-#            y.append(pY)
-#            x1.append(pX + pW)
-#            y1.append(pY + pH)
-#        bbX, bbY = min(x), min(y)
-#        bbW, bbH = max(x1) - bbX, max(y1) - bbY
-#        return bbX, bbY, bbW, bbH
-
-#    def __cropToFit(self, image):
-#        """Crop image to fit the bounding box.
-#        """
-#        clone = image.copy()
-#        contours, hierarchy = cv2.findContours(clone, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-#        if not contours:
-#            return image
-#        x, y, w, h = self.__mergeContours(contours)
-#        cv2.rectangle(self.input, (x, y), (x + w, y + h), (0, 0, 255), 1)
-#        return image[y:y+h, x:x+w]
-
-#    def __ratioResize(self, image):
-#        """Resize image to get an aspect ratio of 1:1 (square).
-#        """
-#        h, w = image.shape
-#        ratioSize = max(h, w)
-#        blank = np.zeros((ratioSize, ratioSize), np.uint8)
-#        x = (ratioSize - w) / 2.0
-#        y = (ratioSize - h ) / 2.0
-#        blank[y:y+h, x:x+w] = image
-#        return blank
-
-#    def __preprocess(self):
-#        """Pre-process image :
-#        - Convert To Grayscale
-#        - Gaussian Blur (remove noise)
-#        - Threshold (black and white image)
-#        - Crop to fit bounding box
-#        - Resize
-#        """
-#        gray = cv2.cvtColor(self.input, cv2.COLOR_BGR2GRAY)
-#        blur = cv2.GaussianBlur(src=gray, ksize=(5, 5), sigmaX=0)
-#        thresh = cv2.adaptiveThreshold(src=blur, maxValue=255,
-#                                       adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-#                                       thresholdType=cv2.THRESH_BINARY_INV,
-#                                       blockSize=11, C=2)
-#        cropped = self.__cropToFit(thresh)
- #       squared = self.__ratioResize(cropped)
- #       self.preprocessed = cv2.resize(squared, (self.RESIZE, self.RESIZE))

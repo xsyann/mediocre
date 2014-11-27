@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Thu Nov 27 03:53:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 06:30:32 2014 (+0100)
+# Last-Updated: Thu Nov 27 09:44:27 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 86
+#     Update #: 90
 #
 
 import os
@@ -36,7 +36,7 @@ class RecognitionWidgetUI(object):
 
     def setupUI(self):
         layout = QVBoxLayout()
-        self.paintArea = PaintArea()
+        self.paintArea = PaintArea(30)
         self.runButton = QPushButton(self.tr("Run"))
         self.runButton.setFont(QFont('Arial', 15, QFont.Bold))
         self.mode = QComboBox()

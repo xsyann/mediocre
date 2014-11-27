@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 23:31:05 2014 (+0100)
-# Last-Updated: Thu Nov 27 08:11:49 2014 (+0100)
+# Last-Updated: Thu Nov 27 10:24:26 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 76
+#     Update #: 204
 #
 
 import os
@@ -46,10 +46,10 @@ class StatModel(object):
         if not contours:
             return image
         x, y, w, h = self.__mergeContours(contours)
-        cv2.rectangle(self.input, (x, y), (x + w, y + h), (0, 0, 255), 1)
+#        cv2.rectangle(self.input, (x, y), (x + w, y + h), (0, 0, 255), 1)
         return image[y:y+h, x:x+w]
 
-    def __ratioResize(self, image):
+    def _ratioResize(self, image):
         """Resize image to get an aspect ratio of 1:1 (square).
         """
         h, w = image.shape
@@ -76,7 +76,7 @@ class StatModel(object):
                                        thresholdType=cv2.THRESH_BINARY_INV,
                                        blockSize=11, C=2)
         cropped = self._cropToFit(thresh)
-        squared = self.__ratioResize(cropped)
+        squared = self._ratioResize(cropped)
         return cv2.resize(squared, (self.RESIZE, self.RESIZE))
 
     def load(self, filename):
@@ -104,7 +104,9 @@ class ANN(StatModel):
         super(ANN, self).__init__(nClass)
         self._model = cv2.ANN_MLP()
 
-    def train(self, samples, responses):
+    def train(self, samples, responses, updateBase=False):
+        if updateBase:
+            return self._model
         sampleCount, sampleSize = samples.shape
         newResponses = self.unrollResponses(responses).reshape(-1, self.classificationCount)
 
@@ -140,11 +142,11 @@ class KNN(StatModel):
         super(KNN, self).__init__(nClass)
         self._model = cv2.KNearest()
 
-    def train(self, samples, responses):
-        self._model.train(samples, responses)
+    def train(self, samples, responses, updateBase=False):
+        self._model.train(samples, responses, updateBase=updateBase)
 
     def predict(self, samples):
-        retval, results, neighborResponses, dists = self._model.find_nearest(samples, k=10)
+        retval, results, neighborResponses, dists = self._model.find_nearest(samples, k=6)
         return results.ravel()
 
 
@@ -197,18 +199,24 @@ class SVM(StatModel):
 
     def preprocess(self, filename):
         self.input = cv2.imread(filename, 0)
-        deskewed = self._deskew(self.input)
-        hogdata = self._hog1(deskewed)
+        thresh = cv2.adaptiveThreshold(src=self.input, maxValue=255,
+                                       adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                       thresholdType=cv2.THRESH_BINARY_INV,
+                                       blockSize=11, C=2)
+        squared = self._ratioResize(self._cropToFit(thresh))
+        self.input = cv2.resize(squared, (self.RESIZE, self.RESIZE))
+        # deskewed = self._deskew(self.input)
+        hogdata = self._hog1(self.input)
         return np.float32(hogdata)
 
-    def train(self, samples, responses):
-        svm_params = dict( kernel_type = cv2.SVM_LINEAR,
+    def train(self, samples, responses, updateBase=False):
+        if updateBase:
+            return self._model
+        svm_params = dict( kernel_type = cv2.SVM_RBF,
                            svm_type = cv2.SVM_C_SVC,
                            C=2.67, gamma=5.383 )
         return self._model.train(samples, responses, params=svm_params)
 
     def predict(self, samples):
-#        return self._model.predict_all(samples)
         predict = self._model.predict_all(samples)
-        print predict.ravel()
         return predict.ravel()
