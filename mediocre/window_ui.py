@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Sun Nov  9 15:07:41 2014 (+0100)
-# Last-Updated: Wed Nov 26 22:53:17 2014 (+0100)
+# Last-Updated: Thu Nov 27 04:00:33 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 438
+#     Update #: 442
 #
 
 from PyQt5 import QtCore
@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (QHBoxLayout, QTabWidget,
                              QWidget, QSplitter)
 
 from mediocre.classes_tree_view import ClassesTreeView
-from mediocre.widgets import TrainingWidget, DatasetWidget
+from mediocre.widgets import TrainingWidget, DatasetWidget, RecognitionWidget
 
 
 class WindowUI(object):
@@ -24,7 +24,10 @@ class WindowUI(object):
         return TrainingWidget(self.classes_tree_view)
 
     def widgetRecognition(self):
-        return QWidget()
+        return RecognitionWidget(self.classes_tree_view)
+
+    def widgetDataset(self):
+        return DatasetWidget(self.classes_tree_view)
 
     def setupUI(self):
         """Create User Interface.
@@ -34,7 +37,7 @@ class WindowUI(object):
 
         tabs = QTabWidget()
         self.classes_tree_view = ClassesTreeView(self)
-        tabs.addTab(DatasetWidget(self.classes_tree_view), self.tr("Dataset"))
+        tabs.addTab(self.widgetDataset(), self.tr("Dataset"))
         tabs.addTab(self.widgetTraining(), self.tr("Training"))
         tabs.addTab(self.widgetRecognition(), self.tr("Recognition"))
 

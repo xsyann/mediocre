@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Mon Nov 10 14:30:25 2014 (+0100)
-# Last-Updated: Thu Nov 27 01:55:39 2014 (+0100)
+# Last-Updated: Thu Nov 27 05:19:54 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 254
+#     Update #: 272
 #
 
 import os
@@ -17,7 +17,7 @@ import numpy as np
 from PyQt5.QtWidgets import (QGraphicsScene, QGraphicsLineItem,
                              QGraphicsItemGroup, QGraphicsRotation)
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPixmap, QVector3D
+from PyQt5.QtGui import QPainter, QPixmap, QVector3D, QImage
 
 
 class RandomParam():
@@ -202,7 +202,7 @@ class DatasetItem(object):
     """
     RESIZE = 16
 
-    def __init__(self, cl):
+    def __init__(self, cl=None):
         self.input = None
         self.preprocessed = None
         self.cl = cl
@@ -213,8 +213,19 @@ class DatasetItem(object):
         self.__load(filename)
         self.__preprocess()
 
+    def qtToCv(self, image):
+        image = image.convertToFormat(QImage.Format_RGB32)
+
+        width = image.width()
+        height = image.height()
+
+        ptr = image.constBits()
+        ptr.setsize(image.byteCount())
+        arr = np.array(ptr).reshape(height, width, 4)
+        return arr
+
     def loadFromImage(self, img):
-        self.input = img
+        self.input = self.qtToCv(QImage(img))
         self.__preprocess()
 
     @property

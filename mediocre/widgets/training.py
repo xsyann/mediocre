@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:06:45 2014 (+0100)
-# Last-Updated: Thu Nov 27 02:00:37 2014 (+0100)
+# Last-Updated: Thu Nov 27 05:23:40 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 118
+#     Update #: 132
 #
 
 import os
@@ -23,13 +23,6 @@ from PyQt5.QtGui import (QFont, QKeySequence, QIcon, QPixmap, QPainter,
 
 from mediocre.dataset import Dataset
 from mediocre.ocr import OCR
-
-
-class EmittingStream(QObject):
-    textWritten = pyqtSignal(str)
-
-    def write(self, text):
-        self.textWritten.emit(str(text))
 
 
 class TrainingWidgetUI(object):
@@ -93,10 +86,6 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         self.initUI()
         self._dataset = Dataset(self.datasetFolder.text())
         self.datasetFolder.textChanged.connect(self._dataset.setFolder)
-        sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
-
-    def __del__(self):
-        sys.stdout = sys.__stdout__
 
     def populateUI(self):
         for mode in self.__modes:
@@ -122,20 +111,18 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
     ########################################################
     # Signals handlers
 
-    def normalOutputWritten(self, text):
-        """Append text to debug infos.
-        """
-        cursor = self.outputText.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        cursor.insertText(text)
-        self.outputText.setTextCursor(cursor)
-        QApplication.processEvents()
-
     def selectFolder(self):
         file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if file:
             self.datasetFolder.setText(file)
             self._dataset.setFolder(file)
+
+    def log(self, text):
+        cursor = self.outputText.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self.outputText.setTextCursor(cursor)
+        QApplication.processEvents()
 
     def train(self):
         modes = {
@@ -147,7 +134,7 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         ocr = OCR()
         ocr.trainModel(self._dataset, classes, mode,
                        self.trainRatio.value() / 100.0,
-                       self.maxPerClass.value())
+                       self.maxPerClass.value(), self.log)
         ocr.saveModel()
 
 
