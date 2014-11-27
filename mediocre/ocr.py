@@ -9,15 +9,15 @@
 #     Update #: 68
 #
 
-import sys
 import os
+import sys
 import hashlib
-
-import models
 from analyzer import Analyzer
 
-class OCR(object):
+from mediocre import models
 
+
+class OCR(object):
     MODEL_ANN = 0
     MODEL_KNEAREST = 1
 
@@ -28,7 +28,8 @@ class OCR(object):
         return "{0}_{1}.yml".format(m.hexdigest(), self.__type)
 
     def saveModel(self):
-        folder = os.path.join(os.path.dirname(__file__), "models")
+        root = os.path.dirname(os.path.dirname(__file__))
+        folder = os.path.join(root, "models")
         if not os.path.exists(folder):
             os.makedirs(folder)
         filename = self.getModelFilename(self.__classes)
@@ -70,7 +71,8 @@ class OCR(object):
         if verbose:
             analyzer = Analyzer(self.__model, self.__dataset, trainRatio)
             analyzer.start()
-        self.__model.train(self.__dataset.trainSamples, self.__dataset.trainResponses)
+        self.__model.train(self.__dataset.trainSamples,
+                           self.__dataset.trainResponses)
         if verbose:
             analyzer.stop()
             analyzer.analyze()

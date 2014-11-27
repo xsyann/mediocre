@@ -19,13 +19,16 @@ from PyQt5.QtWidgets import (QGraphicsScene, QGraphicsLineItem,
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QPixmap, QVector3D
 
+
 class RandomParam():
+
     def __init__(self, count, width, height, minThick, maxThick,
                  xAngle, yAngle, zAngle):
         args = locals()
         args.pop('self')
         for k, v in args.iteritems():
             self.__dict__[k] = v
+
 
 class Dataset(object):
 
@@ -56,7 +59,7 @@ class Dataset(object):
         dirs = os.path.join(self._folder, folder)
         if not os.path.exists(dirs):
             os.makedirs(dirs)
-        filename =  prefix + folder
+        filename = prefix + folder
         path = self.generateFilename(dirs, prefix, format)
         if pixmap.save(path, format):
             self._last.append(path)

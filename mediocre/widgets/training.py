@@ -21,14 +21,16 @@ from PyQt5.QtCore import QRectF, QEvent, Qt, QSize, pyqtSignal, QObject
 from PyQt5.QtGui import (QFont, QKeySequence, QIcon, QPixmap, QPainter,
                          QTextCursor)
 
-from dataset import Dataset
-from ocr import OCR
+from mediocre.dataset import Dataset
+from mediocre.ocr import OCR
+
 
 class EmittingStream(QObject):
     textWritten = pyqtSignal(str)
 
     def write(self, text):
         self.textWritten.emit(str(text))
+
 
 class TrainingWidgetUI(object):
 
@@ -76,11 +78,10 @@ class TrainingWidgetUI(object):
         layout.addWidget(self.outputText)
         self.setLayout(layout)
 
-class TrainingWidget(QWidget, TrainingWidgetUI):
 
+class TrainingWidget(QWidget, TrainingWidgetUI):
     MODE_ANN = "Neural Network"
     MODE_KNEAREST = "K-Nearest"
-
     __modes = [MODE_ANN, MODE_KNEAREST]
 
     def __init__(self, classes_tree, parent=None):
@@ -110,7 +111,8 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         self.maxPerClass.setRange(1, 50000)
         self.maxPerClass.setValue(700)
         self.trainRatio.setValue(50)
-        folder = os.path.join(os.path.dirname(__file__), "dataset")
+        root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        folder = os.path.join(root, "dataset")
         self.datasetFolder.setText(folder)
 
     ########################################################
@@ -138,10 +140,13 @@ class TrainingWidget(QWidget, TrainingWidgetUI):
         modes = {
             self.MODE_ANN: OCR.MODEL_ANN,
             self.MODE_KNEAREST: OCR.MODEL_KNEAREST
-            }
+        }
         mode = modes[self.__modes[self.mode.currentIndex()]]
         classes = self._classes_tree.getClasses()
         ocr = OCR()
         ocr.trainModel(self._dataset, classes, mode, self.trainRatio.value(),
                        self.maxPerClass.value())
         ocr.saveModel()
+
+
+__all__ = ["TrainingWidget"]
