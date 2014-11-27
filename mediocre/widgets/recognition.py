@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Thu Nov 27 03:53:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 05:23:26 2014 (+0100)
+# Last-Updated: Thu Nov 27 06:30:32 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 74
+#     Update #: 86
 #
 
 import os
@@ -91,13 +91,14 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         mode = modes[self.__modes[self.mode.currentIndex()]]
         folder = self.modelsFolder.text()
         self.ocr.loadModel(self._classes_tree.getClasses(), folder, mode)
-        pixmap = QPixmap(200, 200)
+        pixmap = QPixmap(50, 50)
         pixmap.fill(Qt.white)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
         self.paintArea.render(painter)
         painter.end()
         self.resultText.setText(self.tr("Result: ") + self.ocr.charFromImage(pixmap))
+        self.paintArea.clear()
 
     def selectFolder(self):
         file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))

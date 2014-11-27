@@ -4,14 +4,15 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:47:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 05:14:16 2014 (+0100)
+# Last-Updated: Thu Nov 27 07:57:01 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 122
+#     Update #: 208
 #
 
 import os
 import sys
 import hashlib
+import pickle
 import numpy as np
 from analyzer import Analyzer
 
@@ -35,7 +36,16 @@ class OCR(object):
         if not os.path.exists(folder):
             os.makedirs(folder)
         filename = self.getModelFilename(self.__classes, self.__type)
-        self.__model.save(os.path.join(folder, filename))
+        if not self.__type == self.MODEL_KNN:
+            self.__model.save(os.path.join(folder, filename))
+        else:
+            arr = (self.__dataset.trainSamples,
+                   self.__dataset.trainResponses)
+            print arr
+            file = open(os.path.join(folder, filename), 'wb')
+            print os.path.join(folder, filename)
+            pickle.dump(arr, file)
+            file.close()
 
     def loadModel(self, classes, folder, type=MODEL_ANN):
         self.__classes = classes
@@ -43,7 +53,15 @@ class OCR(object):
         path = os.path.join(folder, filename)
         if os.path.exists(path):
             self.__model = self.__initModel(type)
-            self.__model.load(path)
+            if not type == self.MODEL_KNN:
+                self.__model.load(path)
+            else:
+                file = open(path, 'rb')
+                samples, responses = pickle.load(file)
+                samples = np.array(samples.tolist())
+                responses = np.array(responses.tolist())
+                file.close()
+                self.__model.train(samples, responses)
         else:
             self.__model = None
             print "No model found"
@@ -55,17 +73,18 @@ class OCR(object):
         self.__type = type
         if log:
             log("Pre-processing...\n")
-        self.__dataset.preprocess(classes, maxPerClass, trainRatio)
         self.__model = self.__initModel(type)
+        self.__dataset.preprocess(classes, maxPerClass, trainRatio,
+                                  self.__model.preprocess)
         self.__trainModel(trainRatio=trainRatio, log=log)
 
     def charFromImage(self, image):
-        item = DatasetItem()
+        item = DatasetItem(self.__model.preprocess)
         item.loadFromImage(image)
         return self.__charFromDatasetItem(item).value
 
     def charFromFile(self, filename):
-        item = dataset.DatasetItem()
+        item = dataset.DatasetItem(self.__model.preprocess)
         item.loadFromFile(filename)
         return self.__charFromDatasetItem(item)
 

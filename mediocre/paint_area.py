@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Tue Nov 11 21:35:40 2014 (+0100)
-# Last-Updated: Wed Nov 26 23:15:29 2014 (+0100)
+# Last-Updated: Thu Nov 27 06:28:59 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 1080
+#     Update #: 1084
 #
 
 from PyQt5.QtCore import Qt
@@ -113,8 +113,10 @@ class PaintArea(QGraphicsView):
     def render(self, painter):
         if self._instructions:
             self.scene().removeItem(self._instructions)
+#        self.scene().render(painter,
+#                            source=self.canvas())
         self.scene().render(painter,
-                            source=self.canvas())
+                            source=self.scene().itemsBoundingRect())
         if self._instructions:
             self.scene().addItem(self._instructions)
 
