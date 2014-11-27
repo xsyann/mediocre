@@ -10,6 +10,7 @@
 #
 
 import os
+from collections import OrderedDict
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QComboBox,
@@ -18,6 +19,7 @@ from PyQt5.QtGui import QPixmap, QPainter, QFont
 
 from mediocre.paint_area import PaintArea
 from mediocre.ocr import OCR
+
 
 class RecognitionWidgetUI(object):
 
@@ -39,18 +41,16 @@ class RecognitionWidgetUI(object):
         self.paintArea = PaintArea(30)
         self.runButton = QPushButton(self.tr("Run"))
         self.runButton.setFont(QFont('Arial', 15, QFont.Bold))
-        self.mode = QComboBox()
-        self.resultText = QLabel(self.tr("Result:"))
+        self.results = OrderedDict((m, QLabel(m + ": ")) for m in self._modes)
         layout.addWidget(self.paintArea)
         hbox = QHBoxLayout()
-        hbox.addWidget(QLabel(self.tr("Mode")))
-        hbox.addWidget(self.mode)
         hbox.addStretch(1)
         hbox.addWidget(self.runButton)
         hbox.addStretch(1)
         layout.addLayout(hbox)
         layout.addWidget(self.folderWidget())
-        layout.addWidget(self.resultText)
+        for label in self.results.values():
+            layout.addWidget(label)
         self.setLayout(layout)
 
 
@@ -58,7 +58,7 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
     MODE_ANN = "Artifical Neural Networks"
     MODE_KNN = "K-Nearest Neighbors"
     MODE_SVM = "Support Vector Machines"
-    __modes = [MODE_ANN, MODE_KNN, MODE_SVM]
+    _modes = [MODE_ANN, MODE_KNN, MODE_SVM]
 
     def __init__(self, classes_tree, parent=None):
         super(RecognitionWidget, self).__init__(parent)
@@ -74,13 +74,17 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
         self.selectFolderButton.clicked.connect(self.selectFolder)
 
     def populateUI(self):
-        for mode in self.__modes:
-            self.mode.addItem(mode)
+        pass
 
     def initUI(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         folder = os.path.join(root, "models")
         self.modelsFolder.setText(folder)
+
+    def run_mode(self, mode, pixmap):
+        folder = self.modelsFolder.text()
+        self.ocr.loadModel(self._classes_tree.getClasses(), folder, mode)
+        return self.ocr.charFromImage(pixmap)
 
     def run(self):
         modes = {
@@ -88,16 +92,17 @@ class RecognitionWidget(QWidget, RecognitionWidgetUI):
             self.MODE_KNN: OCR.MODEL_KNN,
             self.MODE_SVM: OCR.MODEL_SVM
         }
-        mode = modes[self.__modes[self.mode.currentIndex()]]
-        folder = self.modelsFolder.text()
-        self.ocr.loadModel(self._classes_tree.getClasses(), folder, mode)
+
         pixmap = QPixmap(50, 50)
         pixmap.fill(Qt.white)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
         self.paintArea.render(painter)
         painter.end()
-        self.resultText.setText(self.tr("Result: ") + self.ocr.charFromImage(pixmap))
+
+        for mode, label in self.results.items():
+            result = self.run_mode(modes[mode], pixmap)
+            label.setText(mode + ": " + result)
         self.paintArea.clear()
 
     def selectFolder(self):

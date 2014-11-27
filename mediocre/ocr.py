@@ -19,6 +19,7 @@ from analyzer import Analyzer
 from mediocre import models
 from mediocre.dataset import DatasetItem
 
+
 class OCR(object):
     MODEL_ANN = 0
     MODEL_KNN = 1
@@ -80,7 +81,7 @@ class OCR(object):
         return self.__charFromDatasetItem(item).value
 
     def charFromFile(self, filename):
-        item = dataset.DatasetItem(self.__model.preprocess)
+        item = DatasetItem(self.__model.preprocess)
         item.loadFromFile(filename)
         return self.__charFromDatasetItem(item)
 
