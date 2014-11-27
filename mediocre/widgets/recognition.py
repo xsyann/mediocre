@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Thu Nov 27 03:53:17 2014 (+0100)
-# Last-Updated: Thu Nov 27 12:54:48 2014 (+0100)
+# Last-Updated: Thu Nov 27 15:18:23 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 138
+#     Update #: 140
 #
 
 import os
@@ -55,7 +55,7 @@ class RecognitionWidgetUI(object):
 
 
 class RecognitionWidget(QWidget, RecognitionWidgetUI):
-    MODE_ANN = "Artifical Neural Networks"
+    MODE_ANN = "Artificial Neural Networks"
     MODE_KNN = "K-Nearest Neighbors"
     MODE_SVM = "Support Vector Machines"
     _modes = [MODE_ANN, MODE_KNN, MODE_SVM]

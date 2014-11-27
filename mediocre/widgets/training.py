@@ -4,9 +4,9 @@
 #
 # Author: Yann KOETH
 # Created: Wed Nov 26 17:06:45 2014 (+0100)
-# Last-Updated: Thu Nov 27 11:36:56 2014 (+0100)
+# Last-Updated: Thu Nov 27 15:18:11 2014 (+0100)
 #           By: Yann KOETH
-#     Update #: 140
+#     Update #: 142
 #
 
 import os
@@ -72,7 +72,7 @@ class TrainingWidgetUI(object):
 
 
 class TrainingWidget(QWidget, TrainingWidgetUI):
-    MODE_ANN = "Artifical Neural Networks"
+    MODE_ANN = "Artificial Neural Networks"
     MODE_KNN = "K-Nearest Neighbors"
     MODE_SVM = "Support Vector Machines"
     __modes = [MODE_ANN, MODE_KNN, MODE_SVM]
